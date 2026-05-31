@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mars Espresso — Kartım</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C8A96E;
+      --gold-light: #E2C99A;
+      --dark: #1C1C1C;
+      --dark-2: #2A2A2A;
+      --text-muted: rgba(255,255,255,0.45);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #111;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(200,169,110,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    /* VERTICAL WALLET CARD */
+    .loyalty-card {
+      background: var(--dark);
+      border-radius: 24px;
+      padding: 2rem 1.5rem;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid rgba(200,169,110,0.15);
+      box-shadow: 0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-logo {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .logo-mars {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      line-height: 1;
+    }
+    .logo-sub {
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 6px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Stars grid 5x2 */
+    .stars-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 1.75rem;
+    }
+    .star-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 24px;
+      transition: transform 0.3s;
+    }
+    .star-cell.filled { color: var(--gold); }
+    .star-cell.empty { color: rgba(255,255,255,0.1); }
+    .star-cell.gift-waiting {
+      border: 1.5px dashed rgba(200,169,110,0.35);
+      color: rgba(200,169,110,0.3);
+      font-size: 20px;
+    }
+    .star-cell.gift-earned {
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 22px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200,169,110,0.4); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(200,169,110,0); }
+    }
+
+    .card-divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      margin-bottom: 1.25rem;
+    }
+
+    .cups-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.75rem;
+    }
+    .cups-left .label {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cups-left .value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 600;
+      color: white;
+      line-height: 1;
+    }
+    .cups-right {
+      text-align: right;
+      font-size: 10px;
+      color: rgba(200,169,110,0.65);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+    .cups-right span { display: block; color: var(--gold); font-size: 11px; }
+
+    /* QR */
+    .qr-block {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #qrcode canvas, #qrcode img { border-radius: 4px; }
+    .qr-id {
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 2px;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* Progress below card */
+    .progress-wrap {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .progress-track {
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .gift-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0.5rem;
+    }
+    .gift-note strong { color: var(--gold); }
+
+    /* Loading / error states */
+    .state-loading, .state-error {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 3rem 0;
+    }
+    .state-error { color: #e87070; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="loading" class="state-loading">Yükleniyor...</div>
+    <div id="error" class="state-error" style="display:none"></div>
+
+    <div id="card-content" style="display:none">
+      <div class="loyalty-card">
+        <div class="card-logo">
+          <div class="logo-mars">MARS</div>
+          <div class="logo-sub">Espresso</div>
+        </div>
+
+        <div class="stars-grid" id="stars-grid"></div>
+
+        <div class="card-divider"></div>
+
+        <div class="cups-row">
+          <div class="cups-left">
+            <div class="label">Fincan</div>
+            <div class="value" id="cups-value">— / 9</div>
+          </div>
+          <div class="cups-right">
+            10. fincan<span>hediye ✦</span>
+          </div>
+        </div>
+
+        <div class="qr-block">
+          <div id="qrcode"></div>
+          <div class="qr-id" id="qr-id-label"></div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>İlerleme</span>
+          <span id="progress-text">—</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="gift-note">
+        10. fincan — <strong>istediğin kahve bedava</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 10;
+
+    // Get ID from URL path /card/XXXXXXXX
+    const id = window.location.pathname.split('/').pop();
+
+    async function loadCard() {
+      try {
+        const res = await fetch(`/api/customer/${id}`);
+        if (!res.ok) throw new Error('Kart bulunamadı');
+        const data = await res.json();
+        renderCard(data);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Kart bulunamadı. ID\'yi kontrol et.';
+      }
+    }
+
+    function renderCard(data) {
+      const cups = data.cups;
+
+      // Stars
+      const grid = document.getElementById('stars-grid');
+      grid.innerHTML = '';
+      for (let i = 1; i <= TOTAL; i++) {
+        const cell = document.createElement('div');
+        if (i === TOTAL) {
+          cell.className = 'star-cell ' + (cups >= TOTAL ? 'gift-earned' : 'gift-waiting');
+          cell.textContent = '🎁';
+        } else {
+          cell.className = 'star-cell ' + (i <= cups ? 'filled' : 'empty');
+          cell.textContent = '☕';
+        }
+        grid.appendChild(cell);
+      }
+
+      // Cups counter
+      const shown = Math.min(cups, 9);
+      document.getElementById('cups-value').textContent = shown + ' / 9';
+
+      // Progress
+      const pct = Math.round((cups / TOTAL) * 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      const left = TOTAL - cups;
+      document.getElementById('progress-text').textContent =
+        left <= 0 ? '🎉 Hediye hazır!' : 'hediyeye ' + left + ' fincan kaldı';
+
+      // QR code
+      document.getElementById('qr-id-label').textContent = data.id;
+      new QRCode(document.getElementById('qrcode'), {
+        text: `${window.location.origin}/api/customer/${data.id}`,
+        width: 140,
+        height: 140,
+        colorDark: '#1C1C1C',
+        colorLight: '#ffffff',
+      });
+
+      // Show
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('card-content').style.display = 'block';
+    }
+
+    loadCard();
+    // Auto-refresh every 30s so cup count updates after barista scans
+    setInterval(loadCard, 30000);
+  </script>
+</body>
+</html>

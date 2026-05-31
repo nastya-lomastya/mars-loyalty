@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mars Espresso — Barista Paneli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #C8A96E;
+      --gold-light: #E2C99A;
+      --dark: #1C1C1C;
+      --bg: #F7F4EF;
+      --border: rgba(0,0,0,0.1);
+      --text-muted: rgba(0,0,0,0.45);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+    .header-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--dark);
+    }
+    .header-role {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Section */
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* Scanner */
+    #scanner-container {
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #html5-qrcode-button-camera-stop,
+    #html5-qrcode-button-camera-start { display: none !important; }
+
+    .scan-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      transition: opacity 0.2s;
+    }
+    .scan-btn:hover { opacity: 0.85; }
+    .scan-btn.scanning { background: #555; }
+
+    /* Manual input */
+    .manual-row {
+      display: flex;
+      gap: 8px;
+    }
+    .manual-row input {
+      flex: 1;
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      outline: none;
+      letter-spacing: 1px;
+    }
+    .manual-row input:focus { border-color: var(--gold); }
+    .manual-row button {
+      padding: 11px 18px;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Customer card */
+    .customer-card {
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+    .customer-card.visible { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .c-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .c-id-label { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    .c-id-value { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .c-cups-label { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: right; }
+    .c-cups-value { font-family: 'Cormorant Garamond', serif; font-size: 32px; text-align: right; line-height: 1; }
+
+    .stars-mini { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .sm { font-size: 22px; }
+    .sm.f { color: var(--gold); }
+    .sm.e { color: rgba(0,0,0,0.12); }
+    .sm.ge { background: var(--gold); color: white; border-radius: 6px; padding: 2px 4px; font-size: 18px; }
+    .sm.gw { color: rgba(200,169,110,0.3); font-size: 18px; }
+
+    .add-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--dark);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .add-btn:hover { opacity: 0.85; }
+    .add-btn.gift {
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 16px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+    /* Register */
+    .reg-section {
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(200,169,110,0.12);
+      color: var(--gold);
+      font-size: 11px;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 0.75rem;
+      border: 1px solid rgba(200,169,110,0.3);
+    }
+    .reg-note { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5; }
+    .reg-btn {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      color: var(--dark);
+      border: 1.5px solid var(--dark);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .reg-btn:hover { background: var(--dark); color: white; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--dark);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+      white-space: nowrap;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #2d6a4f; }
+    .toast.error { background: #c0392b; }
+    .toast.warning { background: #b7791f; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="header-logo">MARS</div>
+      <div style="font-size:9px;letter-spacing:3px;color:var(--gold)">ESPRESSO</div>
+    </div>
+    <div class="header-role">Barista Paneli</div>
+  </div>
+
+  <!-- SCANNER -->
+  <div class="section">
+    <div class="section-title">QR Tara</div>
+    <div id="scanner-container">
+      <div style="color:rgba(255,255,255,0.3);font-size:13px">Kamera başlatılıyor...</div>
+    </div>
+    <button class="scan-btn" id="scan-toggle" onclick="toggleScanner()">
+      📷 Kamerayı Aç
+    </button>
+  </div>
+
+  <!-- MANUAL INPUT -->
+  <div class="section">
+    <div class="section-title">Manuel ID Gir</div>
+    <div class="manual-row">
+      <input type="text" id="manual-id" placeholder="a7f3c2d1" maxlength="8" />
+      <button onclick="lookupById()">Bul</button>
+    </div>
+  </div>
+
+  <!-- CUSTOMER RESULT -->
+  <div class="section customer-card" id="customer-card">
+    <div class="section-title">Müşteri Bulundu</div>
+    <div class="c-header">
+      <div>
+        <div class="c-id-label">ID</div>
+        <div class="c-id-value" id="c-id">—</div>
+      </div>
+      <div>
+        <div class="c-cups-label">Fincan</div>
+        <div class="c-cups-value" id="c-cups">—</div>
+      </div>
+    </div>
+    <div class="stars-mini" id="c-stars"></div>
+    <button class="add-btn" id="add-btn" onclick="addCup()">
+      ☕ Fincan Ekle
+    </button>
+  </div>
+
+  <!-- REGISTER NEW -->
+  <div class="section reg-section">
+    <div class="badge">Yeni Müşteri?</div>
+    <div class="reg-note">Kayıt et — hemen 3 karşılama yıldızı kazansın</div>
+    <button class="reg-btn" onclick="registerNew()">+ Yeni Müşteri Kayıt Et</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const TOTAL = 10;
+    let currentCustomer = null;
+    let scanner = null;
+    let scannerActive = false;
+
+    // ── Scanner ──────────────────────────────────────────────────────────────
+    function toggleScanner() {
+      if (scannerActive) {
+        stopScanner();
+      } else {
+        startScanner();
+      }
+    }
+
+    function startScanner() {
+      const btn = document.getElementById('scan-toggle');
+      btn.textContent = '⏹ Kamerayı Kapat';
+      btn.classList.add('scanning');
+      scannerActive = true;
+
+      scanner = new Html5Qrcode('scanner-container');
+      scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decoded) => {
+          // Extract customer ID from URL or use raw value
+          const parts = decoded.split('/');
+          const id = parts[parts.length - 1];
+          stopScanner();
+          lookupCustomer(id);
+        },
+        () => {}
+      ).catch(() => {
+        showToast('Kamera açılamadı', 'error');
+        stopScanner();
+      });
+    }
+
+    function stopScanner() {
+      if (scanner) scanner.stop().catch(() => {});
+      scannerActive = false;
+      const btn = document.getElementById('scan-toggle');
+      btn.textContent = '📷 Kamerayı Aç';
+      btn.classList.remove('scanning');
+    }
+
+    // ── Lookup ───────────────────────────────────────────────────────────────
+    function lookupById() {
+      const id = document.getElementById('manual-id').value.trim();
+      if (!id) return showToast('ID gir', 'warning');
+      lookupCustomer(id);
+    }
+
+    async function lookupCustomer(id) {
+      try {
+        const res = await fetch(`/api/customer/${id}`);
+        if (!res.ok) return showToast('Müşteri bulunamadı', 'error');
+        const data = await res.json();
+        currentCustomer = data;
+        renderCustomer(data);
+        showToast('Müşteri bulundu ✓', 'success');
+      } catch {
+        showToast('Bağlantı hatası', 'error');
+      }
+    }
+
+    function renderCustomer(data) {
+      document.getElementById('c-id').textContent = data.id;
+      const shown = Math.min(data.cups, 9);
+      document.getElementById('c-cups').textContent = shown + ' / 9';
+
+      const stars = document.getElementById('c-stars');
+      stars.innerHTML = '';
+      for (let i = 1; i <= TOTAL; i++) {
+        const s = document.createElement('span');
+        if (i === TOTAL) {
+          s.className = 'sm ' + (data.cups >= TOTAL ? 'ge' : 'gw');
+          s.textContent = '🎁';
+        } else {
+          s.className = 'sm ' + (i <= data.cups ? 'f' : 'e');
+          s.textContent = '☕';
+        }
+        stars.appendChild(s);
+      }
+
+      const btn = document.getElementById('add-btn');
+      if (data.cups >= TOTAL) {
+        btn.className = 'add-btn gift';
+        btn.textContent = '🎁 Hediye Kahveyi Ver';
+      } else {
+        btn.className = 'add-btn';
+        btn.textContent = '☕ Fincan Ekle';
+      }
+
+      document.getElementById('customer-card').classList.add('visible');
+    }
+
+    // ── Add cup ──────────────────────────────────────────────────────────────
+    async function addCup() {
+      if (!currentCustomer) return;
+      const btn = document.getElementById('add-btn');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/add-cup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: currentCustomer.id,
+            baristaId: 'barista-1' // TODO: add PIN system
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.error || 'Hata oluştu', 'error');
+        } else {
+          currentCustomer = { ...currentCustomer, cups: data.cups };
+          renderCustomer(currentCustomer);
+          if (data.giftGiven) {
+            showToast('🎉 Hediye verildi! Sayaç sıfırlandı', 'success');
+          } else if (data.giftEarned) {
+            showToast('🎉 Hediye kazanıldı!', 'success');
+          } else {
+            showToast('Fincan eklendi ✓', 'success');
+          }
+        }
+      } catch {
+        showToast('Bağlantı hatası', 'error');
+      }
+
+      btn.disabled = false;
+    }
+
+    // ── Register new ─────────────────────────────────────────────────────────
+    async function registerNew() {
+      try {
+        const res = await fetch('/api/register', { method: 'POST' });
+        const data = await res.json();
+        currentCustomer = data;
+        renderCustomer(data);
+        showToast(`Yeni müşteri: ${data.id} (+3 yıldız)`, 'success');
+      } catch {
+        showToast('Kayıt hatası', 'error');
+      }
+    }
+
+    // ── Toast ────────────────────────────────────────────────────────────────
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (type ? ' ' + type : '');
+      setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    // Enter key on manual input
+    document.getElementById('manual-id').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') lookupById();
+    });
+  </script>
+</body>
+</html>
