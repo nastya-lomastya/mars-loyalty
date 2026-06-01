@@ -3,20 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mars Espresso — Sadakat Kartı</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>Mars Cafe — Ödül Kartı</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --gold: #C8A96E;
-      --gold-light: #E2C99A;
-      --dark: #1C1C1C;
-      --dark-2: #2A2A2A;
-      --cream: #F5F0E8;
-      --text-muted: rgba(255,255,255,0.5);
-    }
+    :root { --gold: #C8A96E; --gold-light: #E2C99A; --dark: #1a1a1a; }
 
     body {
       font-family: 'DM Sans', sans-serif;
@@ -26,101 +18,85 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem 3rem;
     }
-
-    /* subtle grain overlay */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background: radial-gradient(ellipse at 50% 0%, rgba(200,169,110,0.07) 0%, transparent 55%);
       pointer-events: none;
-      z-index: 0;
     }
-
-    .wrap { position: relative; z-index: 1; width: 100%; max-width: 380px; }
+    .wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
     /* Logo */
     .logo {
-      text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 1.75rem;
+      margin-top: 0.5rem;
     }
-    .logo-mars {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 52px;
-      font-weight: 700;
-      letter-spacing: 8px;
-      line-height: 1;
-      color: white;
-    }
-    .logo-espresso {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 300;
-      letter-spacing: 8px;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
+    .logo img { width: 180px; height: auto; }
 
     /* Card preview */
     .card-preview {
-      background: var(--dark-2);
-      border: 1px solid rgba(200,169,110,0.2);
+      background: #222;
+      border: 1px solid rgba(200,169,110,0.15);
       border-radius: 20px;
-      padding: 1.75rem 1.5rem;
-      margin-bottom: 2rem;
-      text-align: center;
+      padding: 1.5rem 1.25rem;
+      width: 100%;
+      margin-bottom: 1.75rem;
     }
 
-    .preview-title {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 11px;
+    .preview-label {
+      font-size: 10px;
       letter-spacing: 4px;
       color: var(--gold);
       text-transform: uppercase;
-      margin-bottom: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
     }
 
-    .cups-preview {
-      display: flex;
-      justify-content: center;
+    /* Preview cups 4x2 */
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
-    .cup-icon {
-      width: 32px;
-      height: 32px;
+    .pcell {
+      aspect-ratio: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      border-radius: 10px;
+      font-size: 26px;
+      color: rgba(255,255,255,0.12);
     }
-    .cup-icon.filled { color: var(--gold); }
-    .cup-icon.empty { color: rgba(255,255,255,0.15); }
-    .cup-icon.gift {
-      background: var(--gold);
-      color: var(--dark);
-      border-radius: 8px;
-      font-size: 16px;
+    .pcell.gift {
+      border: 1.5px dashed rgba(200,169,110,0.4);
+      color: rgba(200,169,110,0.4);
+      font-size: 20px;
     }
 
     .preview-desc {
       font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.6;
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      line-height: 1.65;
     }
-    .preview-desc strong { color: var(--gold-light); }
+    .preview-desc strong { color: var(--gold-light); font-weight: 500; }
 
     /* CTA */
-    .cta-section { text-align: center; }
-
     .btn-register {
       width: 100%;
-      padding: 16px;
+      padding: 15px;
       background: var(--gold);
       color: var(--dark);
       border: none;
@@ -129,108 +105,87 @@
       font-size: 15px;
       font-weight: 500;
       cursor: pointer;
-      letter-spacing: 0.5px;
       transition: all 0.2s;
       margin-bottom: 1rem;
     }
     .btn-register:hover { background: var(--gold-light); transform: translateY(-1px); }
-    .btn-register:active { transform: translateY(0); }
     .btn-register:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     .cta-note {
       font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* Success state */
-    .success {
-      display: none;
+      color: rgba(255,255,255,0.3);
       text-align: center;
-      animation: fadeIn 0.4s ease;
-    }
-    .success.visible { display: block; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .success-icon {
-      font-size: 48px;
-      margin-bottom: 1rem;
-    }
-    .success-id {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 36px;
-      color: var(--gold);
-      letter-spacing: 4px;
-      margin: 1rem 0 0.5rem;
-    }
-    .success-note {
-      font-size: 13px;
-      color: var(--text-muted);
       line-height: 1.6;
-      margin-bottom: 1.5rem;
     }
+
+    /* Success */
+    .success { display: none; text-align: center; animation: fadeIn 0.4s ease; width: 100%; }
+    .success.visible { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    .success-icon { font-size: 36px; color: var(--gold); margin-bottom: 0.75rem; }
+    .success-title { font-size: 10px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 0.75rem; }
+    .success-id {
+      font-size: 32px;
+      color: var(--gold);
+      letter-spacing: 3px;
+      margin: 0.5rem 0 0.75rem;
+      font-weight: 300;
+    }
+    .success-note { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 1.5rem; }
     .btn-view {
       display: inline-block;
-      padding: 12px 28px;
+      width: 100%;
+      padding: 14px;
       border: 1px solid var(--gold);
       color: var(--gold);
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
       text-decoration: none;
+      text-align: center;
       transition: all 0.2s;
     }
     .btn-view:hover { background: var(--gold); color: var(--dark); }
-
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,0.08);
-      margin: 2rem 0;
-    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="logo">
-      <img src="/mars_white.svg" alt="Mars Cafe" style="width:200px; height:auto;">
+      <img src="/mars_white.svg" alt="Mars Cafe">
     </div>
 
-    <div id="main-content">
+    <div id="main-content" style="width:100%">
       <div class="card-preview">
-        <div class="preview-title">Sadakat Kartı</div>
-        <div class="cups-preview">
-          <!-- 3 filled (welcome), 6 empty, 1 gift -->
-          <div class="cup-icon filled">☕</div>
-          <div class="cup-icon filled">☕</div>
-          <div class="cup-icon filled">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon empty">☕</div>
-          <div class="cup-icon gift">🎁</div>
+        <div class="preview-label">Ödül Kartı</div>
+        <div class="preview-grid">
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell"><i class="ti ti-coffee"></i></div>
+          <div class="pcell gift"><i class="ti ti-gift"></i></div>
         </div>
         <div class="preview-desc">
-          Kartını oluştur, <strong>3 hoş geldin yıldızı</strong> kazan.<br>
-          10. fincanın <strong>bedava</strong> — istediğin kahve.
+          7 fincan satın al, <strong>8. fincanı bedava</strong> al.<br>
+          İstediğin kahve — hiçbir kural yok.
         </div>
       </div>
 
-      <div class="cta-section">
-        <button class="btn-register" id="btn-register" onclick="register()">
-          Kartımı Oluştur
-        </button>
-        <div class="cta-note">
-          İsim, e-posta veya telefon gerekmez.<br>
-          Kartın anonim ve güvenlidir.
-        </div>
+      <button class="btn-register" id="btn-register" onclick="register()">
+        Kartımı Oluştur
+      </button>
+      <div class="cta-note">
+        İsim, e-posta veya telefon gerekmez.<br>
+        Kartın anonim ve güvenlidir.
       </div>
     </div>
 
     <div class="success" id="success">
-      <div class="success-icon">✦</div>
-      <div style="font-size:13px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;">Kartın Hazır</div>
+      <div class="success-icon"><i class="ti ti-sparkles"></i></div>
+      <div class="success-title">Kartın Hazır</div>
       <div class="success-id" id="success-id">—</div>
       <div class="success-note">
         Bu ID senin kartın. Kaydet veya ekran görüntüsü al.<br>
@@ -245,21 +200,17 @@
       const btn = document.getElementById('btn-register');
       btn.disabled = true;
       btn.textContent = 'Oluşturuluyor...';
-
       try {
         const res = await fetch('/api/register', { method: 'POST' });
         const data = await res.json();
-
         if (data.id) {
-          // Save to localStorage so card page can load it
           localStorage.setItem('mars_loyalty_id', data.id);
-
           document.getElementById('main-content').style.display = 'none';
           document.getElementById('success-id').textContent = data.id;
-          document.getElementById('view-card-link').href = `/card/${data.id}`;
+          document.getElementById('view-card-link').href = '/card/' + data.id;
           document.getElementById('success').classList.add('visible');
         }
-      } catch (e) {
+      } catch(e) {
         btn.disabled = false;
         btn.textContent = 'Kartımı Oluştur';
         alert('Bir hata oluştu, tekrar dene.');

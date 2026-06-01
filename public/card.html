@@ -5,21 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mars Cafe — Kartım</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --gold: #C8A96E;
-      --dark: #1a1a1a;
-    }
+    :root { --gold: #C8A96E; --dark: #1a1a1a; }
+
     body {
       font-family: 'DM Sans', sans-serif;
       background: #111;
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem 2rem;
     }
     body::before {
       content: '';
@@ -32,24 +31,27 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 300px;
+      max-width: 320px;
     }
+
     .loyalty-card {
       background: var(--dark);
       border-radius: 24px;
-      padding: 2rem 1.5rem 1.75rem;
+      padding: 1.75rem 1.5rem 1.75rem;
       color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       border: 1px solid rgba(200,169,110,0.12);
-      box-shadow: 0 32px 64px rgba(0,0,0,0.6);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
     }
+
+    /* Logo */
     .card-logo {
-      margin-bottom: 1.75rem;
       text-align: center;
+      margin-bottom: 1.5rem;
     }
-    .card-logo img { width: 150px; height: auto; }
+    .card-logo img { width: 140px; height: auto; }
 
     /* 4x2 grid */
     .stars-grid {
@@ -65,13 +67,14 @@
       align-items: center;
       justify-content: center;
       border-radius: 12px;
-      font-size: 26px;
+      font-size: 28px;
+      line-height: 1;
     }
     .star-cell.filled { color: var(--gold); }
-    .star-cell.empty { color: rgba(255,255,255,0.1); }
+    .star-cell.empty { color: rgba(255,255,255,0.12); }
     .star-cell.gift-waiting {
-      border: 1.5px dashed rgba(200,169,110,0.35);
-      color: rgba(200,169,110,0.3);
+      border: 1.5px dashed rgba(200,169,110,0.4);
+      color: rgba(200,169,110,0.35);
       font-size: 22px;
     }
     .star-cell.gift-earned {
@@ -126,17 +129,13 @@
       gap: 8px;
     }
     #qrcode canvas, #qrcode img { border-radius: 4px; display: block; }
-    .qr-id {
-      font-size: 10px;
-      color: #999;
-      letter-spacing: 2px;
-    }
+    .qr-id { font-size: 10px; color: #999; letter-spacing: 2px; }
 
     .state-loading, .state-error {
       text-align: center;
       color: rgba(255,255,255,0.4);
       font-size: 14px;
-      padding: 3rem 0;
+      padding: 4rem 0;
     }
     .state-error { color: #e87070; }
   </style>
@@ -183,52 +182,42 @@
     async function loadCard() {
       try {
         const res = await fetch('/api/customer/' + id);
-        if (!res.ok) throw new Error('Kart bulunamadı');
+        if (!res.ok) throw new Error();
         const data = await res.json();
         renderCard(data);
-      } catch (e) {
+      } catch(e) {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Kart bulunamadı. ID\'yi kontrol et.';
+        document.getElementById('error').textContent = 'Kart bulunamadı.';
       }
     }
 
     function renderCard(data) {
-      const cups = data.cups;
-      const gifts = data.gifts || 0;
-
-      // Stars — 4x2 grid, last cell is gift
+      const cups = data.cups, gifts = data.gifts || 0;
       const grid = document.getElementById('stars-grid');
       grid.innerHTML = '';
       for (let i = 1; i <= TOTAL; i++) {
         const cell = document.createElement('div');
         if (i === TOTAL) {
           cell.className = 'star-cell ' + (cups >= TOTAL ? 'gift-earned' : 'gift-waiting');
-          cell.textContent = '🎁';
+          cell.innerHTML = '<i class="ti ti-gift"></i>';
         } else {
           cell.className = 'star-cell ' + (i <= cups ? 'filled' : 'empty');
-          cell.textContent = '☕';
+          cell.innerHTML = '<i class="ti ti-coffee"></i>';
         }
         grid.appendChild(cell);
       }
-
-      // Counters
-      document.getElementById('cups-value').textContent = Math.min(cups, 7) + ' / 7';
+      document.getElementById('cups-value').textContent = Math.min(cups,7) + ' / 7';
       document.getElementById('gifts-value').textContent = gifts;
-
-      // QR — generate only once
       if (!qrGenerated) {
         document.getElementById('qr-id-label').textContent = data.id;
         new QRCode(document.getElementById('qrcode'), {
           text: window.location.origin + '/api/customer/' + data.id,
-          width: 150,
-          height: 150,
-          colorDark: '#1a1a1a',
-          colorLight: '#ffffff',
+          width: 150, height: 150,
+          colorDark: '#1a1a1a', colorLight: '#ffffff',
         });
         qrGenerated = true;
       }
-
       document.getElementById('loading').style.display = 'none';
       document.getElementById('card-content').style.display = 'block';
     }
