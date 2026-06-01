@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mars Cafe — Ödül Kartı</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,7 +18,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem 3rem;
+      padding: 0.75rem 1rem 2rem;
     }
     body::before {
       content: '';
@@ -40,8 +40,8 @@
     /* Logo */
     .logo-svg { width: 240px; max-width: 72vw; display: block; margin: 0 auto; }
     .logo {
-      margin-bottom: 1.75rem;
-      margin-top: 0.5rem;
+      margin-bottom: 1.1rem;
+      margin-top: 0;
     }
     .logo img { width: 180px; height: auto; }
 
@@ -52,16 +52,17 @@
       border-radius: 20px;
       padding: 1.5rem 1.25rem;
       width: 100%;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.1rem;
     }
 
     .preview-label {
-      font-size: 10px;
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
       letter-spacing: 4px;
       color: var(--gold);
       text-transform: uppercase;
       text-align: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.1rem;
     }
 
     /* Preview cups 4x2 */
@@ -87,10 +88,12 @@
     }
 
     .preview-desc {
-      font-size: 13px;
-      color: rgba(255,255,255,0.55);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
       text-align: center;
-      line-height: 1.65;
+      line-height: 1.75;
+      letter-spacing: 0.3px;
     }
     .preview-desc strong { color: var(--gold-light); font-weight: 500; }
 
@@ -102,9 +105,10 @@
       color: var(--dark);
       border: none;
       border-radius: 12px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
       font-weight: 500;
+      letter-spacing: 1px;
       cursor: pointer;
       transition: all 0.2s;
       margin-bottom: 1rem;
@@ -113,10 +117,12 @@
     .btn-register:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     .cta-note {
-      font-size: 12px;
-      color: rgba(255,255,255,0.3);
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
       text-align: center;
-      line-height: 1.6;
+      line-height: 1.9;
+      letter-spacing: 0.5px;
     }
 
     /* Success */
@@ -125,15 +131,16 @@
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     .success-icon { font-size: 36px; color: var(--gold); margin-bottom: 0.75rem; }
-    .success-title { font-size: 10px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 0.75rem; }
+    .success-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 0.75rem; }
     .success-id {
-      font-size: 32px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
       color: var(--gold);
       letter-spacing: 3px;
       margin: 0.5rem 0 0.75rem;
-      font-weight: 300;
+      font-weight: 400;
     }
-    .success-note { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 1.5rem; }
+    .success-note { font-family: 'Cinzel', serif; font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.9; margin-bottom: 1.5rem; letter-spacing: 0.3px; }
     .btn-view {
       display: inline-block;
       width: 100%;
@@ -141,8 +148,9 @@
       border: 1px solid var(--gold);
       color: var(--gold);
       border-radius: 12px;
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 1px;
       text-decoration: none;
       text-align: center;
       transition: all 0.2s;

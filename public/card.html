@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mars Cafe — Kartım</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -18,7 +18,7 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 1.5rem 1rem 2rem;
+      padding: 0.75rem 1rem 1.5rem;
     }
     body::before {
       content: '';
@@ -37,7 +37,7 @@
     .loyalty-card {
       background: var(--dark);
       border-radius: 24px;
-      padding: 1.75rem 1.5rem 1.75rem;
+      padding: 1.25rem 1.25rem 1.5rem;
       color: white;
       display: flex;
       flex-direction: column;
@@ -50,7 +50,7 @@
     .logo-svg { width: 220px; max-width: 72vw; display: block; margin: 0 auto; }
     .card-logo {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
     .card-logo img { width: 140px; height: auto; }
 
@@ -60,7 +60,7 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       width: 100%;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.1rem;
     }
     .star-cell {
       aspect-ratio: 1;
@@ -101,21 +101,23 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.1rem;
     }
     .counter-block { display: flex; flex-direction: column; gap: 3px; }
     .counter-label {
-      font-size: 9px;
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
       letter-spacing: 3px;
       color: rgba(255,255,255,0.35);
       text-transform: uppercase;
     }
     .counter-value {
-      font-size: 30px;
-      font-weight: 700;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 400;
       color: white;
       line-height: 1;
-      letter-spacing: -1px;
+      letter-spacing: 0;
     }
     .counter-block.right { align-items: flex-end; }
     .counter-value.gold { color: var(--gold); }
