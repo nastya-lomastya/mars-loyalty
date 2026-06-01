@@ -2,14 +2,34 @@
   "version": 2,
   "builds": [
     {
+      "src": "public/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "server.js"
+    },
+    {
+      "src": "/(.*\\.(svg|png|ico|css|js))",
+      "dest": "public/$1"
+    },
+    {
+      "src": "/card/(.*)",
+      "dest": "public/card.html"
+    },
+    {
+      "src": "/barista",
+      "dest": "public/barista.html"
+    },
+    {
+      "src": "/",
+      "dest": "public/index.html"
     }
   ]
 }
