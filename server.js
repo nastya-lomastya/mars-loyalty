@@ -17,6 +17,23 @@ const TOTAL_CUPS = 8;
 const WELCOME_CUPS = 1;
 const MAX_CUPS_PER_DAY = 2;
 
+// ─── VERIFY barista PIN ───────────────────────────────────────────────────────
+app.post('/api/barista/verify', async (req, res) => {
+  const { pin } = req.body;
+  if (!pin) return res.status(400).json({ error: 'PIN gerekli' });
+
+  const { data, error } = await supabase
+    .from('baristas')
+    .select('id, name, active')
+    .eq('pin', pin)
+    .single();
+
+  if (error || !data) return res.status(401).json({ error: 'Geçersiz PIN' });
+  if (!data.active) return res.status(403).json({ error: 'Bu PIN devre dışı' });
+
+  res.json({ id: data.id, name: data.name });
+});
+
 // ─── REGISTER new customer ────────────────────────────────────────────────────
 app.post('/api/register', async (req, res) => {
   const id = uuidv4().replace(/-/g, '').slice(0, 8);
@@ -45,8 +62,19 @@ app.get('/api/customer/:id', async (req, res) => {
 
 // ─── ADD cup (barista action) ─────────────────────────────────────────────────
 app.post('/api/add-cup', async (req, res) => {
-  const { customerId, baristaId } = req.body;
+  const { customerId, baristaPin } = req.body;
   if (!customerId) return res.status(400).json({ error: 'customerId gerekli' });
+  if (!baristaPin) return res.status(400).json({ error: 'PIN gerekli' });
+
+  // Verify barista PIN
+  const { data: barista, error: baristaErr } = await supabase
+    .from('baristas')
+    .select('id, name, active')
+    .eq('pin', baristaPin)
+    .single();
+
+  if (baristaErr || !barista) return res.status(401).json({ error: 'Geçersiz PIN' });
+  if (!barista.active) return res.status(403).json({ error: 'Bu PIN devre dışı' });
 
   // Get current customer state
   const { data: customer, error: fetchErr } = await supabase
@@ -57,7 +85,7 @@ app.post('/api/add-cup', async (req, res) => {
 
   if (fetchErr || !customer) return res.status(404).json({ error: 'Müşteri bulunamadı' });
 
-  // Check daily limit — max 2 cups per UUID per day
+  // Check daily limit
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
@@ -74,12 +102,10 @@ app.post('/api/add-cup', async (req, res) => {
     });
   }
 
-  // Check if gift is being given (cups reached total)
   const giftGiven = customer.cups >= TOTAL_CUPS;
   let newCups, newGifts;
 
   if (giftGiven) {
-    // Reset cups to 1 (welcome cup), increment gift counter
     newCups = 1;
     newGifts = customer.gifts + 1;
   } else {
@@ -89,21 +115,17 @@ app.post('/api/add-cup', async (req, res) => {
 
   const { data: updated, error: updateErr } = await supabase
     .from('customers')
-    .update({
-      cups: newCups,
-      gifts: newGifts,
-      updated_at: new Date().toISOString()
-    })
+    .update({ cups: newCups, gifts: newGifts, updated_at: new Date().toISOString() })
     .eq('id', customerId)
     .select()
     .single();
 
   if (updateErr) return res.status(500).json({ error: updateErr.message });
 
-  // Log the action
+  // Log with barista info
   await supabase.from('logs').insert([{
     customer_id: customerId,
-    barista_id: baristaId || 'unknown',
+    barista_id: barista.id,
     action: giftGiven ? 'gift_given' : 'cup_added',
     cups_after: newCups
   }]);
@@ -113,7 +135,8 @@ app.post('/api/add-cup', async (req, res) => {
     cups: updated.cups,
     gifts: updated.gifts,
     giftGiven,
-    giftEarned: updated.cups >= TOTAL_CUPS
+    giftEarned: updated.cups >= TOTAL_CUPS,
+    baristaName: barista.name
   });
 });
 
