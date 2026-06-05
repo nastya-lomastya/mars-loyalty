@@ -253,19 +253,19 @@
       <div class="pin-dot"></div>
     </div>
     <div class="pin-error" id="pin-error"></div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinPress('1')">1</button>
-      <button class="pin-key" onclick="pinPress('2')">2</button>
-      <button class="pin-key" onclick="pinPress('3')">3</button>
-      <button class="pin-key" onclick="pinPress('4')">4</button>
-      <button class="pin-key" onclick="pinPress('5')">5</button>
-      <button class="pin-key" onclick="pinPress('6')">6</button>
-      <button class="pin-key" onclick="pinPress('7')">7</button>
-      <button class="pin-key" onclick="pinPress('8')">8</button>
-      <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinPress('0')">0</button>
-      <button class="pin-key delete" onclick="pinDelete()">⌫</button>
+    <div style="display:grid;grid-template-columns:repeat(3,80px);gap:14px;justify-content:center;margin-bottom:1rem;">
+      <button onclick="pinPress('1')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">1</button>
+      <button onclick="pinPress('2')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">2</button>
+      <button onclick="pinPress('3')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">3</button>
+      <button onclick="pinPress('4')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">4</button>
+      <button onclick="pinPress('5')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">5</button>
+      <button onclick="pinPress('6')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">6</button>
+      <button onclick="pinPress('7')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">7</button>
+      <button onclick="pinPress('8')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">8</button>
+      <button onclick="pinPress('9')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">9</button>
+      <div style="width:80px;height:80px;"></div>
+      <button onclick="pinPress('0')" style="width:80px;height:80px;border-radius:50%;border:none;background:white;font-family:'Cormorant Garamond',serif;font-size:32px;color:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;">0</button>
+      <button onclick="pinDelete()" style="width:80px;height:80px;border-radius:50%;border:none;background:transparent;font-size:24px;color:#1a1a1a;cursor:pointer;">⌫</button>
     </div>
   </div>
 
