@@ -3,6 +3,8 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const fs = require('fs');
+const { Template } = require('@walletpass/pass-js');
 
 const app = express();
 app.use(express.json());
@@ -16,6 +18,150 @@ const supabase = createClient(
 const TOTAL_CUPS = 8;
 const WELCOME_CUPS = 1;
 const MAX_CUPS_PER_DAY = 2;
+
+// ─── APPLE WALLET PASS ────────────────────────────────────────────────────────
+// Cached template (created once on first request)
+let passTemplate = null;
+
+async function getPassTemplate() {
+  if (passTemplate) return passTemplate;
+
+  const certPath = path.join(__dirname, 'certs', 'pass.p12');
+  const wwdrPath = path.join(__dirname, 'certs', 'wwdr.pem');
+
+  // Check that certificates exist
+  if (!fs.existsSync(certPath)) {
+    throw new Error('pass.p12 not found in /certs folder');
+  }
+  if (!fs.existsSync(wwdrPath)) {
+    throw new Error('wwdr.pem not found in /certs folder');
+  }
+
+  const template = new Template('storeCard', {
+    passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER, // pass.com.marsespresso.loyalty
+    teamIdentifier: process.env.APPLE_TEAM_ID,
+    organizationName: 'Mars Espresso',
+    description: 'Mars Loyalty Card',
+    backgroundColor: 'rgb(26, 26, 26)',
+    foregroundColor: 'rgb(200, 169, 110)',
+    labelColor:  'rgb(200, 169, 110)',
+    logoText: 'MARS CAFE',
+  });
+
+  // Load certificate and WWDR
+  await template.loadCertificate(certPath, process.env.PASS_CERT_PASSWORD);
+
+  // Load logo image (PNG, required by Apple)
+  const logoPath = path.join(__dirname, 'public', 'pass-logo.png');
+  if (fs.existsSync(logoPath)) {
+    template.images.add('logo', logoPath);
+    template.images.add('logo', logoPath, '2x'); // retina
+  }
+
+  const iconPath = path.join(__dirname, 'public', 'pass-icon.png');
+  if (fs.existsSync(iconPath)) {
+    template.images.add('icon', iconPath);
+    template.images.add('icon', iconPath, '2x');
+  }
+
+  passTemplate = template;
+  return template;
+}
+
+// GET /api/pass/:id — generate and return .pkpass file
+app.get('/api/pass/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Fetch customer from DB
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !customer) {
+    return res.status(404).json({ error: 'Müşteri bulunamadı' });
+  }
+
+  try {
+    const template = await getPassTemplate();
+
+    // Calculate stamp display
+    const cups = customer.cups;         // cups earned so far
+    const totalSlots = TOTAL_CUPS - 1;  // 7 slots to fill (8th is free)
+    const filledSlots = Math.min(cups, totalSlots);
+
+    // Build stamp string: e.g. "■ ■ ■ □ □ □ □" (7 slots)
+    const filled = '■';
+    const empty  = '□';
+    const stampRow = Array(totalSlots).fill(null)
+      .map((_, i) => (i < filledSlots ? filled : empty))
+      .join(' ');
+
+    const pass = template.createPass({
+      serialNumber: customer.id,
+      // Barcode (QR) — encodes the customer ID for barista scanner
+      barcodes: [{
+        message: customer.id,
+        format:  'PKBarcodeFormatQR',
+        messageEncoding: 'iso-8859-1',
+      }],
+      storeCard: {
+        primaryFields: [
+          {
+            key:   'stamps',
+            label: 'FINCAN',
+            value: `${cups} / ${totalSlots}`,
+          }
+        ],
+        secondaryFields: [
+          {
+            key:   'stamp_display',
+            label: 'İLERLEME',
+            value: stampRow,
+          }
+        ],
+        auxiliaryFields: [
+          {
+            key:          'gifts',
+            label:        'HEDİYE',
+            value:        `${customer.gifts}`,
+          },
+          {
+            key:   'card_id',
+            label: 'KART ID',
+            value: customer.id,
+          }
+        ],
+        backFields: [
+          {
+            key:   'how_it_works',
+            label: 'Nasıl çalışır?',
+            value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
+          },
+          {
+            key:   'terms',
+            label: 'Koşullar',
+            value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
+          }
+        ]
+      }
+    });
+
+    const buf = await pass.asBuffer();
+
+    res.set({
+      'Content-Type':        'application/vnd.apple.pkpass',
+      'Content-Disposition': `attachment; filename="mars-loyalty-${id}.pkpass"`,
+      'Content-Length':       buf.length,
+    });
+    res.send(buf);
+
+  } catch (err) {
+    console.error('PKPass generation error:', err);
+    res.status(500).json({ error: 'Pass oluşturulamadı: ' + err.message });
+  }
+});
 
 // ─── VERIFY barista PIN ───────────────────────────────────────────────────────
 app.post('/api/barista/verify', async (req, res) => {
@@ -66,7 +212,6 @@ app.post('/api/add-cup', async (req, res) => {
   if (!customerId) return res.status(400).json({ error: 'customerId gerekli' });
   if (!baristaPin) return res.status(400).json({ error: 'PIN gerekli' });
 
-  // Verify barista PIN
   const { data: barista, error: baristaErr } = await supabase
     .from('baristas')
     .select('id, name, active')
@@ -76,7 +221,6 @@ app.post('/api/add-cup', async (req, res) => {
   if (baristaErr || !barista) return res.status(401).json({ error: 'Geçersiz PIN' });
   if (!barista.active) return res.status(403).json({ error: 'Bu PIN devre dışı' });
 
-  // Get current customer state
   const { data: customer, error: fetchErr } = await supabase
     .from('customers')
     .select('*')
@@ -122,27 +266,120 @@ app.post('/api/add-cup', async (req, res) => {
 
   if (updateErr) return res.status(500).json({ error: updateErr.message });
 
-  // Log with barista info
   await supabase.from('logs').insert([{
     customer_id: customerId,
-    barista_id: barista.id,
-    action: giftGiven ? 'gift_given' : 'cup_added',
-    cups_after: newCups
+    barista_id:  barista.id,
+    action:      giftGiven ? 'gift_given' : 'cup_added',
+    cups_after:  newCups
   }]);
 
   res.json({
-    id: updated.id,
-    cups: updated.cups,
-    gifts: updated.gifts,
+    id:          updated.id,
+    cups:        updated.cups,
+    gifts:       updated.gifts,
     giftGiven,
-    giftEarned: updated.cups >= TOTAL_CUPS,
+    giftEarned:  updated.cups >= TOTAL_CUPS,
     baristaName: barista.name
   });
 });
 
+// ─── GOOGLE WALLET PASS ───────────────────────────────────────────────────────
+app.get('/api/google-pass/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Fetch customer from DB
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !customer) {
+    return res.status(404).json({ error: 'Müşteri bulunamadı' });
+  }
+
+  try {
+    const issuerId  = process.env.GOOGLE_ISSUER_ID;
+    const classId   = process.env.GOOGLE_CLASS_ID;
+    const email     = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const keyId     = process.env.GOOGLE_PRIVATE_KEY_ID;
+
+    const cups     = customer.cups;
+    const totalSlots = TOTAL_CUPS - 1; // 7
+    const filled   = Math.min(cups, totalSlots);
+
+    // Build loyalty object
+    const loyaltyObject = {
+      id: `${issuerId}.mars_${id}`,
+      classId: `${issuerId}.${classId}`,
+      state: 'ACTIVE',
+      accountId: id,
+      accountName: `Kart: ${id}`,
+      loyaltyPoints: {
+        label: 'Fincan',
+        balance: {
+          string: `${filled} / ${totalSlots}`
+        }
+      },
+      secondaryLoyaltyPoints: {
+        label: 'Hediye',
+        balance: {
+          string: `${customer.gifts}`
+        }
+      },
+      barcode: {
+        type:             'QR_CODE',
+        value:            id,
+        alternateText:    id,
+      },
+      heroImage: {
+        sourceUri: {
+          uri: 'https://card.marsespresso.com/mars_white.png'
+        }
+      },
+      textModulesData: [
+        {
+          id:    'how_it_works',
+          header: 'Nasıl çalışır?',
+          body:  '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.'
+        }
+      ],
+      infoModuleData: {
+        showLastUpdateTime: true
+      }
+    };
+
+    // Build JWT payload
+    const jwtPayload = {
+      iss: email,
+      aud: 'google',
+      typ: 'savetowallet',
+      iat: Math.floor(Date.now() / 1000),
+      payload: {
+        loyaltyObjects: [loyaltyObject]
+      },
+      origins: ['https://card.marsespresso.com']
+    };
+
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(jwtPayload, privateKey, {
+      algorithm:  'RS256',
+      keyid:      keyId,
+    });
+
+    const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+    res.redirect(saveUrl);
+
+  } catch (err) {
+    console.error('Google Wallet error:', err);
+    res.status(500).json({ error: 'Google pass oluşturulamadı: ' + err.message });
+  }
+});
+
 // ─── PAGES ────────────────────────────────────────────────────────────────────
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/barista', (req, res) => res.sendFile(path.join(__dirname, 'public', 'barista.html')));
+app.get('/',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/barista',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'barista.html')));
 app.get('/card/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'card.html')));
 
 const PORT = process.env.PORT || 3000;

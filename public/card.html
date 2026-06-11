@@ -141,6 +141,58 @@
       padding: 4rem 0;
     }
     .state-error { color: #e87070; }
+
+    /* Wallet buttons */
+    .wallet-buttons {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-apple-wallet {
+      display: none;
+      width: 100%;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .btn-apple-wallet img {
+      width: 100%;
+      height: 44px;
+      object-fit: contain;
+    }
+    .btn-google-wallet {
+      display: none;
+      width: 100%;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .btn-google-wallet img {
+      width: 100%;
+      height: 44px;
+      object-fit: contain;
+    }
+    .btn-wallet-generic {
+      display: none;
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-wallet-generic:hover { background: var(--gold); color: var(--dark); }
   </style>
 </head>
 <body>
@@ -176,6 +228,15 @@
           <div id="qrcode"></div>
           <div class="qr-id" id="qr-id-label"></div>
         </div>
+        <!-- Wallet buttons — shown based on device -->
+        <div class="wallet-buttons">
+          <button class="btn-apple-wallet" id="btn-apple-wallet" onclick="downloadApplePass()">
+            <img src="https://developer.apple.com/wallet/add-to-apple-wallet-guidelines/img/en_add_to_apple_wallet_rgb_us-uk_051221.svg" alt="Add to Apple Wallet">
+          </button>
+          <button class="btn-google-wallet" id="btn-google-wallet" onclick="addToGoogleWallet()">
+            <img src="https://developers.google.com/static/wallet/images/add-to-google-wallet/Add_to_Google_Wallet_badge.svg" alt="Add to Google Wallet">
+          </button>
+        </div>
       </div>
 
     </div>
@@ -185,6 +246,28 @@
     const TOTAL = 8;
     const id = window.location.pathname.split('/').pop();
     let qrGenerated = false;
+
+    // Detect device
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isAndroid = /Android/.test(ua);
+
+    // Show correct wallet button
+    window.addEventListener('DOMContentLoaded', () => {
+      if (isIOS) {
+        document.getElementById('btn-apple-wallet').style.display = 'block';
+      } else if (isAndroid) {
+        document.getElementById('btn-google-wallet').style.display = 'block';
+      }
+    });
+
+    function downloadApplePass() {
+      window.location.href = '/api/pass/' + id;
+    }
+
+    function addToGoogleWallet() {
+      window.location.href = '/api/google-pass/' + id;
+    }
 
     async function loadCard() {
       try {
@@ -232,8 +315,5 @@
     loadCard();
     setInterval(loadCard, 30000);
   </script>
-</body>
-</html>
-
 </body>
 </html>
