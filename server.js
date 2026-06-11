@@ -339,6 +339,15 @@ app.get('/api/google-pass/:id', async (req, res) => {
   }
 });
 
+// ─── DEBUG (удалить после теста) ─────────────────────────────────────────────
+app.get('/api/debug-modules', (req, res) => {
+  const mods = {};
+  ['passkit-generator', 'jsonwebtoken', 'jszip'].forEach(m => {
+    try { require(m); mods[m] = 'OK'; } catch(e) { mods[m] = e.message; }
+  });
+  res.json(mods);
+});
+
 // ─── PAGES ────────────────────────────────────────────────────────────────────
 app.get('/',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/barista',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'barista.html')));
