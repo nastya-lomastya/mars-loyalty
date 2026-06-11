@@ -20,59 +20,10 @@ const WELCOME_CUPS = 1;
 const MAX_CUPS_PER_DAY = 2;
 
 // ─── APPLE WALLET PASS ────────────────────────────────────────────────────────
-// Cached template (created once on first request)
-let passTemplate = null;
-
-async function getPassTemplate() {
-  if (passTemplate) return passTemplate;
-
-  const certPath = path.join(__dirname, 'certs', 'pass.p12');
-  const wwdrPath = path.join(__dirname, 'certs', 'wwdr.pem');
-
-  // Check that certificates exist
-  if (!fs.existsSync(certPath)) {
-    throw new Error('pass.p12 not found in /certs folder');
-  }
-  if (!fs.existsSync(wwdrPath)) {
-    throw new Error('wwdr.pem not found in /certs folder');
-  }
-
-  const template = new Template('storeCard', {
-    passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER, // pass.com.marsespresso.loyalty
-    teamIdentifier: process.env.APPLE_TEAM_ID,
-    organizationName: 'Mars Espresso',
-    description: 'Mars Loyalty Card',
-    backgroundColor: 'rgb(26, 26, 26)',
-    foregroundColor: 'rgb(200, 169, 110)',
-    labelColor:  'rgb(200, 169, 110)',
-    logoText: 'MARS CAFE',
-  });
-
-  // Load certificate and WWDR
-  await template.loadCertificate(certPath, process.env.PASS_CERT_PASSWORD);
-
-  // Load logo image (PNG, required by Apple)
-  const logoPath = path.join(__dirname, 'public', 'pass-logo.png');
-  if (fs.existsSync(logoPath)) {
-    template.images.add('logo', logoPath);
-    template.images.add('logo', logoPath, '2x'); // retina
-  }
-
-  const iconPath = path.join(__dirname, 'public', 'pass-icon.png');
-  if (fs.existsSync(iconPath)) {
-    template.images.add('icon', iconPath);
-    template.images.add('icon', iconPath, '2x');
-  }
-
-  passTemplate = template;
-  return template;
-}
-
 // GET /api/pass/:id — generate and return .pkpass file
 app.get('/api/pass/:id', async (req, res) => {
   const { id } = req.params;
 
-  // Fetch customer from DB
   const { data: customer, error } = await supabase
     .from('customers')
     .select('*')
@@ -84,71 +35,78 @@ app.get('/api/pass/:id', async (req, res) => {
   }
 
   try {
-    const template = await getPassTemplate();
+    const { PKPass } = require('passkit-generator');
 
-    // Calculate stamp display
-    const cups = customer.cups;         // cups earned so far
-    const totalSlots = TOTAL_CUPS - 1;  // 7 slots to fill (8th is free)
-    const filledSlots = Math.min(cups, totalSlots);
+    if (!process.env.PASS_P12_BASE64) throw new Error('PASS_P12_BASE64 env variable missing');
+    if (!process.env.PASS_WWDR_BASE64) throw new Error('PASS_WWDR_BASE64 env variable missing');
 
-    // Build stamp string: e.g. "■ ■ ■ □ □ □ □" (7 slots)
-    const filled = '■';
-    const empty  = '□';
-    const stampRow = Array(totalSlots).fill(null)
-      .map((_, i) => (i < filledSlots ? filled : empty))
-      .join(' ');
+    const cups      = customer.cups;
+    const totalSlots = TOTAL_CUPS - 1; // 7
+    const filled    = Math.min(cups, totalSlots);
+    const stampRow  = Array(totalSlots).fill(null)
+      .map((_, i) => (i < filled ? '■' : '□')).join(' ');
 
-    const pass = template.createPass({
-      serialNumber: customer.id,
-      // Barcode (QR) — encodes the customer ID for barista scanner
-      barcodes: [{
-        message: customer.id,
-        format:  'PKBarcodeFormatQR',
-        messageEncoding: 'iso-8859-1',
-      }],
-      storeCard: {
-        primaryFields: [
-          {
-            key:   'stamps',
-            label: 'FINCAN',
-            value: `${cups} / ${totalSlots}`,
-          }
-        ],
-        secondaryFields: [
-          {
-            key:   'stamp_display',
-            label: 'İLERLEME',
-            value: stampRow,
-          }
-        ],
-        auxiliaryFields: [
-          {
-            key:          'gifts',
-            label:        'HEDİYE',
-            value:        `${customer.gifts}`,
+    const pass = await PKPass.from({
+      model: {
+        'pass.json': Buffer.from(JSON.stringify({
+          formatVersion:      1,
+          passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
+          serialNumber:       customer.id,
+          teamIdentifier:     process.env.APPLE_TEAM_ID,
+          organizationName:   'Mars Espresso',
+          description:        'Mars Loyalty Card',
+          logoText:           'MARS CAFE',
+          backgroundColor:    'rgb(26, 26, 26)',
+          foregroundColor:    'rgb(200, 169, 110)',
+          labelColor:         'rgb(200, 169, 110)',
+          barcodes: [{
+            message:         customer.id,
+            format:          'PKBarcodeFormatQR',
+            messageEncoding: 'iso-8859-1',
+          }],
+          storeCard: {
+            primaryFields: [{
+              key:   'stamps',
+              label: 'FİNCAN',
+              value: `${filled} / ${totalSlots}`,
+            }],
+            secondaryFields: [{
+              key:   'progress',
+              label: 'İLERLEME',
+              value: stampRow,
+            }],
+            auxiliaryFields: [
+              { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
+              { key: 'card_id', label: 'KART ID', value: customer.id },
+            ],
+            backFields: [
+              {
+                key:   'how',
+                label: 'Nasıl çalışır?',
+                value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
+              },
+              {
+                key:   'terms',
+                label: 'Koşullar',
+                value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
+              },
+            ],
           },
-          {
-            key:   'card_id',
-            label: 'KART ID',
-            value: customer.id,
-          }
-        ],
-        backFields: [
-          {
-            key:   'how_it_works',
-            label: 'Nasıl çalışır?',
-            value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
-          },
-          {
-            key:   'terms',
-            label: 'Koşullar',
-            value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
-          }
-        ]
-      }
+        })),
+        'icon.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'icon@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'logo.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'logo@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+      },
+      certificates: {
+        wwdr:       Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
+        signerCert: Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
+        signerKey:  Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
+        signerKeyPassphrase: process.env.PASS_CERT_PASSWORD,
+      },
     });
 
-    const buf = await pass.asBuffer();
+    const buf = pass.getAsBuffer();
 
     res.set({
       'Content-Type':        'application/vnd.apple.pkpass',
