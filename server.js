@@ -94,21 +94,22 @@ app.get('/api/pass/:id', async (req, res) => {
 
     const logoBuffer = fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png'));
 
-    const pass = await PKPass.from({
-      model: {
+    // Use direct PKPass constructor with buffers (no filesystem needed)
+    const pass = new PKPass(
+      {
         'pass.json':   Buffer.from(JSON.stringify(passJson)),
         'icon.png':    logoBuffer,
         'icon@2x.png': logoBuffer,
         'logo.png':    logoBuffer,
         'logo@2x.png': logoBuffer,
       },
-      certificates: {
+      {
         wwdr:       Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
         signerCert: Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
         signerKey:  Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
         signerKeyPassphrase: process.env.PASS_CERT_PASSWORD,
-      },
-    });
+      }
+    );
 
     const buf = pass.getAsBuffer();
 
