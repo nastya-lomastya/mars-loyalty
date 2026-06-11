@@ -37,7 +37,8 @@ app.get('/api/pass/:id', async (req, res) => {
   try {
     const { PKPass } = require('passkit-generator');
 
-    if (!process.env.PASS_P12_BASE64) throw new Error('PASS_P12_BASE64 env variable missing');
+    if (!process.env.PASS_CERT_BASE64) throw new Error('PASS_CERT_BASE64 env variable missing');
+    if (!process.env.PASS_KEY_BASE64)  throw new Error('PASS_KEY_BASE64 env variable missing');
     if (!process.env.PASS_WWDR_BASE64) throw new Error('PASS_WWDR_BASE64 env variable missing');
 
     const cups      = customer.cups;
@@ -46,70 +47,65 @@ app.get('/api/pass/:id', async (req, res) => {
     const stampRow  = Array(totalSlots).fill(null)
       .map((_, i) => (i < filled ? '■' : '□')).join(' ');
 
-    const passJson = {
-      formatVersion:      1,
-      passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
-      serialNumber:       customer.id,
-      teamIdentifier:     process.env.APPLE_TEAM_ID,
-      organizationName:   'Mars Espresso',
-      description:        'Mars Loyalty Card',
-      logoText:           'MARS CAFE',
-      backgroundColor:    'rgb(26, 26, 26)',
-      foregroundColor:    'rgb(200, 169, 110)',
-      labelColor:         'rgb(200, 169, 110)',
-      barcodes: [{
-        message:         customer.id,
-        format:          'PKBarcodeFormatQR',
-        messageEncoding: 'iso-8859-1',
-      }],
-      storeCard: {
-        primaryFields: [{
-          key:   'stamps',
-          label: 'FİNCAN',
-          value: `${filled} / ${totalSlots}`,
-        }],
-        secondaryFields: [{
-          key:   'progress',
-          label: 'İLERLEME',
-          value: stampRow,
-        }],
-        auxiliaryFields: [
-          { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
-          { key: 'card_id', label: 'KART ID', value: customer.id },
-        ],
-        backFields: [
-          {
-            key:   'how',
-            label: 'Nasıl çalışır?',
-            value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
+    const pass = await PKPass.from({
+      model: {
+        'pass.json': Buffer.from(JSON.stringify({
+          formatVersion:      1,
+          passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
+          serialNumber:       customer.id,
+          teamIdentifier:     process.env.APPLE_TEAM_ID,
+          organizationName:   'Mars Espresso',
+          description:        'Mars Loyalty Card',
+          logoText:           'MARS CAFE',
+          backgroundColor:    'rgb(26, 26, 26)',
+          foregroundColor:    'rgb(200, 169, 110)',
+          labelColor:         'rgb(200, 169, 110)',
+          barcodes: [{
+            message:         customer.id,
+            format:          'PKBarcodeFormatQR',
+            messageEncoding: 'iso-8859-1',
+          }],
+          storeCard: {
+            primaryFields: [{
+              key:   'stamps',
+              label: 'FİNCAN',
+              value: `${filled} / ${totalSlots}`,
+            }],
+            secondaryFields: [{
+              key:   'progress',
+              label: 'İLERLEME',
+              value: stampRow,
+            }],
+            auxiliaryFields: [
+              { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
+              { key: 'card_id', label: 'KART ID', value: customer.id },
+            ],
+            backFields: [
+              {
+                key:   'how',
+                label: 'Nasıl çalışır?',
+                value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
+              },
+              {
+                key:   'terms',
+                label: 'Koşullar',
+                value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
+              },
+            ],
           },
-          {
-            key:   'terms',
-            label: 'Koşullar',
-            value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
-          },
-        ],
+        })),
+        'icon.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'icon@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'logo.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+        'logo@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
       },
-    };
-
-    const logoBuffer = fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png'));
-
-    // Use direct PKPass constructor with buffers (no filesystem needed)
-    const pass = new PKPass(
-      {
-        'pass.json':   Buffer.from(JSON.stringify(passJson)),
-        'icon.png':    logoBuffer,
-        'icon@2x.png': logoBuffer,
-        'logo.png':    logoBuffer,
-        'logo@2x.png': logoBuffer,
-      },
-      {
+      certificates: {
         wwdr:       Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
-        signerCert: Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
-        signerKey:  Buffer.from(process.env.PASS_P12_BASE64, 'base64'),
+        signerCert: Buffer.from(process.env.PASS_CERT_BASE64, 'base64'),
+        signerKey:  Buffer.from(process.env.PASS_KEY_BASE64,  'base64'),
         signerKeyPassphrase: process.env.PASS_CERT_PASSWORD,
-      }
-    );
+      },
+    });
 
     const buf = pass.getAsBuffer();
 
