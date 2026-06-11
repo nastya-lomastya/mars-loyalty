@@ -1,15 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
-    }
-  ],
+  "buildCommand": "npm install",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -21,15 +12,15 @@
     },
     {
       "src": "/card/(.*)",
-      "dest": "public/card.html"
+      "dest": "server.js"
     },
     {
       "src": "/barista",
-      "dest": "public/barista.html"
+      "dest": "server.js"
     },
     {
       "src": "/",
-      "dest": "public/index.html"
+      "dest": "server.js"
     }
   ]
 }
