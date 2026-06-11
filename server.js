@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
-const { Template } = require('@walletpass/pass-js');
+
 
 const app = express();
 app.use(express.json());
