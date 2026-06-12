@@ -48,9 +48,6 @@ app.get('/api/pass/:id', async (req, res) => {
     const cups       = customer.cups;
     const totalSlots = TOTAL_CUPS - 1; // 7
     const filled     = Math.min(cups, totalSlots);
-    const stampRow   = Array(totalSlots).fill(null)
-      .map((_, i) => (i < filled ? '■' : '□')).join(' ');
-
     // Write pass.json to tmp folder
     const passJson = {
       formatVersion:      1,
@@ -59,7 +56,6 @@ app.get('/api/pass/:id', async (req, res) => {
       teamIdentifier:     process.env.APPLE_TEAM_ID,
       organizationName:   'Mars Espresso',
       description:        'Mars Loyalty Card',
-      logoText:           'MARS CAFE',
       backgroundColor:    'rgb(26, 26, 26)',
       foregroundColor:    'rgb(200, 169, 110)',
       labelColor:         'rgb(200, 169, 110)',
@@ -73,11 +69,6 @@ app.get('/api/pass/:id', async (req, res) => {
           key:   'stamps',
           label: 'FİNCAN',
           value: `${filled} / ${totalSlots}`,
-        }],
-        secondaryFields: [{
-          key:   'progress',
-          label: 'İLERLEME',
-          value: stampRow,
         }],
         auxiliaryFields: [
           { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
@@ -100,12 +91,38 @@ app.get('/api/pass/:id', async (req, res) => {
 
     fs.writeFileSync(path.join(tmpDir, 'pass.json'), JSON.stringify(passJson));
 
-    // Copy icon/logo images to tmp folder
+    // Generate strip image with coffee cup icons
+    const sharp = require('sharp');
+    const GOLD = '#C8A96E';
+    const GREY = '#444444';
+    const W = 640, H = 168;
+    const gap = (W - 80) / totalSlots;
+
+    let circles = '';
+    for (let i = 0; i < totalSlots; i++) {
+      const x = 40 + i * gap + gap / 2;
+      const color = i < filled ? GOLD : GREY;
+      circles += `<circle cx="${x}" cy="84" r="28" fill="${color}"/>
+        <rect x="${x - 14}" y="80" width="28" height="20" rx="3" fill="rgb(26,26,26)"/>
+        <rect x="${x + 16}" y="72" width="10" height="18" rx="5" fill="none" stroke="${color}" stroke-width="3"/>`;
+    }
+
+    const svgStrip = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
+      <rect width="${W}" height="${H}" fill="rgb(26,26,26)"/>
+      ${circles}
+    </svg>`;
+
+    const stripBuf = await sharp(Buffer.from(svgStrip)).png().toBuffer();
+    fs.writeFileSync(path.join(tmpDir, 'strip.png'),    stripBuf);
+    fs.writeFileSync(path.join(tmpDir, 'strip@2x.png'), stripBuf);
+
+    // Logo and icons
+    const logoSrc = path.join(__dirname, 'public', 'mars_transparent.png');
     const iconSrc = path.join(__dirname, 'public', 'mars_white.png');
+    fs.copyFileSync(logoSrc, path.join(tmpDir, 'logo.png'));
+    fs.copyFileSync(logoSrc, path.join(tmpDir, 'logo@2x.png'));
     fs.copyFileSync(iconSrc, path.join(tmpDir, 'icon.png'));
     fs.copyFileSync(iconSrc, path.join(tmpDir, 'icon@2x.png'));
-    fs.copyFileSync(iconSrc, path.join(tmpDir, 'logo.png'));
-    fs.copyFileSync(iconSrc, path.join(tmpDir, 'logo@2x.png'));
 
     const pass = await PKPass.from({
       model: tmpDir,  // path to folder, not an object
