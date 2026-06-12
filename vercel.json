@@ -3,6 +3,13 @@
   "buildCommand": "npm install",
   "routes": [
     {
+      "src": "/api/pass/(.*)",
+      "dest": "server.js",
+      "headers": {
+        "Content-Type": "application/vnd.apple.pkpass"
+      }
+    },
+    {
       "src": "/api/(.*)",
       "dest": "server.js"
     },
