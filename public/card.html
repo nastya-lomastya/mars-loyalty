@@ -262,12 +262,7 @@
     });
 
     function downloadApplePass() {
-      const a = document.createElement('a');
-      a.href = '/api/pass/' + id;
-      a.download = 'mars-loyalty.pkpass';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      window.open('/api/pass/' + id, '_blank');
     }
 
     function addToGoogleWallet() {
