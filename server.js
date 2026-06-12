@@ -344,7 +344,19 @@ app.get('/api/debug-modules', (req, res) => {
   });
   res.json(mods);
 });
-
+app.get('/api/debug-certs', (req, res) => {
+  const cert = process.env.PASS_CERT_BASE64 || '';
+  const key  = process.env.PASS_KEY_BASE64  || '';
+  const wwdr = process.env.PASS_WWDR_BASE64 || '';
+  res.json({
+    cert_length: cert.length,
+    key_length:  key.length,
+    wwdr_length: wwdr.length,
+    cert_decoded_start: Buffer.from(cert, 'base64').toString('utf8').slice(0, 60),
+    key_decoded_start:  Buffer.from(key,  'base64').toString('utf8').slice(0, 60),
+    wwdr_decoded_start: Buffer.from(wwdr, 'base64').toString('utf8').slice(0, 60),
+  });
+});
 // ─── PAGES ────────────────────────────────────────────────────────────────────
 app.get('/',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/barista',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'barista.html')));
