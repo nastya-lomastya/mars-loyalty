@@ -34,7 +34,9 @@ app.get('/api/pass/:id', async (req, res) => {
     return res.status(404).json({ error: 'Müşteri bulunamadı' });
   }
 
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pass-'));
+    // passkit-generator appends '.pass' to the model path, so name the folder ending in .pass
+  const tmpDir = path.join(os.tmpdir(), `mars-${id}-${Date.now()}.pass`);
+  fs.mkdirSync(tmpDir, { recursive: true });
 
   try {
     const { PKPass } = require('passkit-generator');
