@@ -65,13 +65,9 @@ app.get('/api/pass/:id', async (req, res) => {
         messageEncoding: 'iso-8859-1',
       }],
       storeCard: {
-        primaryFields: [{
-          key:   'stamps',
-          label: 'FİNCAN',
-          value: `${filled} / ${totalSlots}`,
-        }],
         auxiliaryFields: [
-          { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
           { key: 'card_id', label: 'KART ID', value: customer.id },
         ],
         backFields: [
@@ -91,25 +87,63 @@ app.get('/api/pass/:id', async (req, res) => {
 
     fs.writeFileSync(path.join(tmpDir, 'pass.json'), JSON.stringify(passJson));
 
-    // Generate strip image with coffee cup icons
+    // Generate strip image — 2 rows: 4 cups top, 3 cups + gift bottom
     const sharp = require('sharp');
     const GOLD = '#C8A96E';
-    const GREY = '#444444';
-    const W = 640, H = 168;
-    const gap = (W - 80) / totalSlots;
+    const GREY = '#3a3a3a';
+    const W = 640, H = 260;
+    const ROW1 = 4, ROW2 = 3;
+    const R = 30; // cup radius
+    const colW1 = W / ROW1;
+    const colW2 = W / (ROW2 + 1); // +1 for gift slot
 
-    let circles = '';
-    for (let i = 0; i < totalSlots; i++) {
-      const x = 40 + i * gap + gap / 2;
-      const color = i < filled ? GOLD : GREY;
-      circles += `<circle cx="${x}" cy="84" r="28" fill="${color}"/>
-        <rect x="${x - 14}" y="80" width="28" height="20" rx="3" fill="rgb(26,26,26)"/>
-        <rect x="${x + 16}" y="72" width="10" height="18" rx="5" fill="none" stroke="${color}" stroke-width="3"/>`;
+    function cupSVG(cx, cy, color) {
+      return `
+        <path d="M${cx-22},${cy-10} Q${cx-22},${cy+18} ${cx},${cy+22} Q${cx+22},${cy+18} ${cx+22},${cy-10} Z"
+              fill="${color}"/>
+        <rect x="${cx-22}" y="${cy-18}" width="44" height="14" rx="4" fill="${color}"/>
+        <rect x="${cx-14}" y="${cy-16}" width="28" height="10" rx="2" fill="rgb(26,26,26)" opacity="0.4"/>
+        <path d="M${cx+22},${cy-12} Q${cx+34},${cy-12} ${cx+34},${cy} Q${cx+34},${cy+12} ${cx+22},${cy+12}"
+              fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/>
+      `;
     }
+
+    function giftSVG(cx, cy, color) {
+      return `
+        <rect x="${cx-20}" y="${cy-8}" width="40" height="28" rx="4" fill="${color}"/>
+        <rect x="${cx-20}" y="${cy-18}" width="40" height="12" rx="3" fill="${color}"/>
+        <line x1="${cx}" y1="${cy-18}" x2="${cx}" y2="${cy+20}" stroke="rgb(26,26,26)" stroke-width="3"/>
+        <line x1="${cx-20}" y1="${cy-12}" x2="${cx+20}" y2="${cy-12}" stroke="rgb(26,26,26)" stroke-width="3"/>
+        <path d="M${cx},${cy-18} Q${cx-12},${cy-30} ${cx-16},${cy-22} Q${cx-20},${cy-14} ${cx},${cy-18}"
+              fill="${color}"/>
+        <path d="M${cx},${cy-18} Q${cx+12},${cy-30} ${cx+16},${cy-22} Q${cx+20},${cy-14} ${cx},${cy-18}"
+              fill="${color}"/>
+      `;
+    }
+
+    let icons = '';
+    // Row 1: 4 cups
+    for (let i = 0; i < ROW1; i++) {
+      const cx = colW1 * i + colW1 / 2;
+      const cy = 72;
+      const color = i < filled ? GOLD : GREY;
+      icons += cupSVG(cx, cy, color);
+    }
+    // Row 2: 3 cups + gift
+    for (let i = 0; i < ROW2; i++) {
+      const cx = colW2 * i + colW2 / 2;
+      const cy = 190;
+      const color = (i + ROW1) < filled ? GOLD : GREY;
+      icons += cupSVG(cx, cy, color);
+    }
+    // Gift slot (8th = free)
+    const giftCx = colW2 * ROW2 + colW2 / 2;
+    const giftColor = filled >= totalSlots ? GOLD : GREY;
+    icons += giftSVG(giftCx, 190, giftColor);
 
     const svgStrip = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
       <rect width="${W}" height="${H}" fill="rgb(26,26,26)"/>
-      ${circles}
+      ${icons}
     </svg>`;
 
     const stripBuf = await sharp(Buffer.from(svgStrip)).png().toBuffer();
