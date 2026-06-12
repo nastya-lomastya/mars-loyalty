@@ -4,7 +4,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
-
+const os = require('os');
 
 const app = express();
 app.use(express.json());
@@ -34,6 +34,8 @@ app.get('/api/pass/:id', async (req, res) => {
     return res.status(404).json({ error: 'Müşteri bulunamadı' });
   }
 
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pass-'));
+
   try {
     const { PKPass } = require('passkit-generator');
 
@@ -41,68 +43,74 @@ app.get('/api/pass/:id', async (req, res) => {
     if (!process.env.PASS_KEY_BASE64)  throw new Error('PASS_KEY_BASE64 env variable missing');
     if (!process.env.PASS_WWDR_BASE64) throw new Error('PASS_WWDR_BASE64 env variable missing');
 
-    const cups      = customer.cups;
+    const cups       = customer.cups;
     const totalSlots = TOTAL_CUPS - 1; // 7
-    const filled    = Math.min(cups, totalSlots);
-    const stampRow  = Array(totalSlots).fill(null)
+    const filled     = Math.min(cups, totalSlots);
+    const stampRow   = Array(totalSlots).fill(null)
       .map((_, i) => (i < filled ? '■' : '□')).join(' ');
 
-    const pass = await PKPass.from({
-      model: {
-        'pass.json': Buffer.from(JSON.stringify({
-          formatVersion:      1,
-          passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
-          serialNumber:       customer.id,
-          teamIdentifier:     process.env.APPLE_TEAM_ID,
-          organizationName:   'Mars Espresso',
-          description:        'Mars Loyalty Card',
-          logoText:           'MARS CAFE',
-          backgroundColor:    'rgb(26, 26, 26)',
-          foregroundColor:    'rgb(200, 169, 110)',
-          labelColor:         'rgb(200, 169, 110)',
-          barcodes: [{
-            message:         customer.id,
-            format:          'PKBarcodeFormatQR',
-            messageEncoding: 'iso-8859-1',
-          }],
-          storeCard: {
-            primaryFields: [{
-              key:   'stamps',
-              label: 'FİNCAN',
-              value: `${filled} / ${totalSlots}`,
-            }],
-            secondaryFields: [{
-              key:   'progress',
-              label: 'İLERLEME',
-              value: stampRow,
-            }],
-            auxiliaryFields: [
-              { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
-              { key: 'card_id', label: 'KART ID', value: customer.id },
-            ],
-            backFields: [
-              {
-                key:   'how',
-                label: 'Nasıl çalışır?',
-                value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
-              },
-              {
-                key:   'terms',
-                label: 'Koşullar',
-                value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
-              },
-            ],
+    // Write pass.json to tmp folder
+    const passJson = {
+      formatVersion:      1,
+      passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
+      serialNumber:       customer.id,
+      teamIdentifier:     process.env.APPLE_TEAM_ID,
+      organizationName:   'Mars Espresso',
+      description:        'Mars Loyalty Card',
+      logoText:           'MARS CAFE',
+      backgroundColor:    'rgb(26, 26, 26)',
+      foregroundColor:    'rgb(200, 169, 110)',
+      labelColor:         'rgb(200, 169, 110)',
+      barcodes: [{
+        message:         customer.id,
+        format:          'PKBarcodeFormatQR',
+        messageEncoding: 'iso-8859-1',
+      }],
+      storeCard: {
+        primaryFields: [{
+          key:   'stamps',
+          label: 'FİNCAN',
+          value: `${filled} / ${totalSlots}`,
+        }],
+        secondaryFields: [{
+          key:   'progress',
+          label: 'İLERLEME',
+          value: stampRow,
+        }],
+        auxiliaryFields: [
+          { key: 'gifts',   label: 'HEDİYE', value: String(customer.gifts) },
+          { key: 'card_id', label: 'KART ID', value: customer.id },
+        ],
+        backFields: [
+          {
+            key:   'how',
+            label: 'Nasıl çalışır?',
+            value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.',
           },
-        })),
-        'icon.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
-        'icon@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
-        'logo.png':    fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
-        'logo@2x.png': fs.readFileSync(path.join(__dirname, 'public', 'mars_white.png')),
+          {
+            key:   'terms',
+            label: 'Koşullar',
+            value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.',
+          },
+        ],
       },
+    };
+
+    fs.writeFileSync(path.join(tmpDir, 'pass.json'), JSON.stringify(passJson));
+
+    // Copy icon/logo images to tmp folder
+    const iconSrc = path.join(__dirname, 'public', 'mars_white.png');
+    fs.copyFileSync(iconSrc, path.join(tmpDir, 'icon.png'));
+    fs.copyFileSync(iconSrc, path.join(tmpDir, 'icon@2x.png'));
+    fs.copyFileSync(iconSrc, path.join(tmpDir, 'logo.png'));
+    fs.copyFileSync(iconSrc, path.join(tmpDir, 'logo@2x.png'));
+
+    const pass = await PKPass.from({
+      model: tmpDir,  // path to folder, not an object
       certificates: {
-        wwdr:       Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
-        signerCert: Buffer.from(process.env.PASS_CERT_BASE64, 'base64'),
-        signerKey:  Buffer.from(process.env.PASS_KEY_BASE64,  'base64'),
+        wwdr:                Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
+        signerCert:          Buffer.from(process.env.PASS_CERT_BASE64, 'base64'),
+        signerKey:           Buffer.from(process.env.PASS_KEY_BASE64,  'base64'),
         signerKeyPassphrase: process.env.PASS_CERT_PASSWORD,
       },
     });
@@ -119,6 +127,9 @@ app.get('/api/pass/:id', async (req, res) => {
   } catch (err) {
     console.error('PKPass generation error:', err);
     res.status(500).json({ error: 'Pass oluşturulamadı: ' + err.message });
+  } finally {
+    // Clean up tmp folder
+    try { fs.rmSync(tmpDir, { recursive: true }); } catch (_) {}
   }
 });
 
@@ -246,7 +257,6 @@ app.post('/api/add-cup', async (req, res) => {
 app.get('/api/google-pass/:id', async (req, res) => {
   const { id } = req.params;
 
-  // Fetch customer from DB
   const { data: customer, error } = await supabase
     .from('customers')
     .select('*')
@@ -261,18 +271,16 @@ app.get('/api/google-pass/:id', async (req, res) => {
     const issuerId  = process.env.GOOGLE_ISSUER_ID;
     const classId   = process.env.GOOGLE_CLASS_ID;
     const email     = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    // Handle both literal \n and real newlines in the key
-    const rawKey = process.env.GOOGLE_PRIVATE_KEY || '';
-    const privateKey = rawKey.includes('\\n') 
-      ? rawKey.replace(/\\n/g, '\n') 
+    const rawKey    = process.env.GOOGLE_PRIVATE_KEY || '';
+    const privateKey = rawKey.includes('\\n')
+      ? rawKey.replace(/\\n/g, '\n')
       : rawKey;
     const keyId     = process.env.GOOGLE_PRIVATE_KEY_ID;
 
-    const cups     = customer.cups;
+    const cups       = customer.cups;
     const totalSlots = TOTAL_CUPS - 1; // 7
-    const filled   = Math.min(cups, totalSlots);
+    const filled     = Math.min(cups, totalSlots);
 
-    // Build loyalty object
     const loyaltyObject = {
       id: `${issuerId}.mars_${id}`,
       classId: `${issuerId}.${classId}`,
@@ -281,58 +289,44 @@ app.get('/api/google-pass/:id', async (req, res) => {
       accountName: `Kart: ${id}`,
       loyaltyPoints: {
         label: 'Fincan',
-        balance: {
-          string: `${filled} / ${totalSlots}`
-        }
+        balance: { string: `${filled} / ${totalSlots}` }
       },
       secondaryLoyaltyPoints: {
         label: 'Hediye',
-        balance: {
-          string: `${customer.gifts}`
-        }
+        balance: { string: `${customer.gifts}` }
       },
       barcode: {
-        type:             'QR_CODE',
-        value:            id,
-        alternateText:    id,
+        type:          'QR_CODE',
+        value:         id,
+        alternateText: id,
       },
       heroImage: {
-        sourceUri: {
-          uri: 'https://card.marsespresso.com/mars_white.png'
-        }
+        sourceUri: { uri: 'https://card.marsespresso.com/mars_white.png' }
       },
-      textModulesData: [
-        {
-          id:    'how_it_works',
-          header: 'Nasıl çalışır?',
-          body:  '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.'
-        }
-      ],
-      infoModuleData: {
-        showLastUpdateTime: true
-      }
+      textModulesData: [{
+        id:     'how_it_works',
+        header: 'Nasıl çalışır?',
+        body:   '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.'
+      }],
+      infoModuleData: { showLastUpdateTime: true }
     };
 
-    // Build JWT payload
     const jwtPayload = {
       iss: email,
       aud: 'google',
       typ: 'savetowallet',
       iat: Math.floor(Date.now() / 1000),
-      payload: {
-        loyaltyObjects: [loyaltyObject]
-      },
+      payload: { loyaltyObjects: [loyaltyObject] },
       origins: ['https://card.marsespresso.com']
     };
 
     const jwt = require('jsonwebtoken');
     const token = jwt.sign(jwtPayload, privateKey, {
-      algorithm:  'RS256',
-      keyid:      keyId,
+      algorithm: 'RS256',
+      keyid:     keyId,
     });
 
-    const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
-    res.redirect(saveUrl);
+    res.redirect(`https://pay.google.com/gp/v/save/${token}`);
 
   } catch (err) {
     console.error('Google Wallet error:', err);
