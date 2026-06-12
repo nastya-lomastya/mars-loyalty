@@ -119,12 +119,9 @@ app.get('/api/pass/:id', async (req, res) => {
 
     const buf = pass.getAsBuffer();
 
-    res.set({
-      'Content-Type':        'application/vnd.apple.pkpass',
-      'Content-Disposition': `attachment; filename="mars-loyalty-${id}.pkpass"`,
-      'Content-Length':       buf.length,
-    });
-    res.send(buf);
+    res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
+    res.setHeader('Content-Disposition', `attachment; filename="mars-loyalty-${id}.pkpass"`);
+    res.end(buf);
 
   } catch (err) {
     console.error('PKPass generation error:', err);
@@ -345,23 +342,6 @@ app.get('/api/debug-modules', (req, res) => {
   res.json(mods);
 });
 
-app.get('/api/debug-certs', (req, res) => {
-  const cert = process.env.PASS_CERT_BASE64 || '';
-  const key  = process.env.PASS_KEY_BASE64  || '';
-  const wwdr = process.env.PASS_WWDR_BASE64 || '';
-  
-  const certDecoded = Buffer.from(cert, 'base64').toString('utf8');
-  const keyDecoded  = Buffer.from(key,  'base64').toString('utf8');
-  const wwdrDecoded = Buffer.from(wwdr, 'base64').toString('utf8');
-  
-  res.json({
-    cert_start: certDecoded.slice(0, 80),
-    cert_end:   certDecoded.slice(-40),
-    key_start:  keyDecoded.slice(0, 80),
-    key_end:    keyDecoded.slice(-40),
-    wwdr_start: wwdrDecoded.slice(0, 80),
-  });
-});
 // ─── PAGES ────────────────────────────────────────────────────────────────────
 app.get('/',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/barista',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'barista.html')));
