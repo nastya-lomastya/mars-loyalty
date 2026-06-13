@@ -498,22 +498,25 @@ app.get('/v1/devices/:deviceId/registrations/:passTypeId', async (req, res) => {
     return res.status(204).send();
   }
 
-  // Проверяем какие customers обновились
-  let query = supabase
-    .from('customers')
-    .select('id, updated_at')
-    .in('id', regs.map(r => r.serial_number));
-
-  if (passesUpdatedSince) {
-    query = query.gt('updated_at', new Date(parseInt(passesUpdatedSince) * 1000).toISOString());
+  // Если passesUpdatedSince не передан — это initial sync
+  // Возвращаем 204 чтобы Apple не запоминал старый lastUpdated
+  if (!passesUpdatedSince) {
+    return res.status(204).send();
   }
 
-  const { data: updated } = await query;
+  // Проверяем какие customers обновились после passesUpdatedSince
+  const sinceDate = new Date(parseInt(passesUpdatedSince) * 1000).toISOString();
+  const { data: updated } = await supabase
+    .from('customers')
+    .select('id, updated_at')
+    .in('id', regs.map(r => r.serial_number))
+    .gt('updated_at', sinceDate);
 
   if (!updated || updated.length === 0) {
     return res.status(304).send();
   }
 
+  // lastUpdated = реальное время последнего обновления из БД
   const lastModified = Math.max(...updated.map(u => new Date(u.updated_at).getTime() / 1000));
 
   res.json({
