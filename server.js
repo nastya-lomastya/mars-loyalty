@@ -215,6 +215,9 @@ app.get('/api/pass/:id', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
     res.setHeader('Content-Disposition', `attachment; filename="mars-loyalty-${id}.pkpass"`);
+    // Last-Modified = реальный updated_at чтобы Apple видел изменения при обновлении
+    res.setHeader('Last-Modified', new Date(customer.updated_at || Date.now()).toUTCString());
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.end(buf);
 
   } catch (err) {
@@ -653,9 +656,8 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
 
     const buf = pass.getAsBuffer();
     res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-    // Каждый раз генерируем уникальный Last-Modified чтобы Apple не кэшировал
-    const lastMod = new Date(Date.now() + Math.floor(Math.random() * 10000));
-    res.setHeader('Last-Modified', lastMod.toUTCString());
+    // Last-Modified = реальный updated_at из БД
+    res.setHeader('Last-Modified', new Date(customer.updated_at || Date.now()).toUTCString());
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.end(buf);
