@@ -7,6 +7,7 @@ const fs = require('fs');
 const os = require('os');
 
 const app = express();
+app.set('etag', false);  // отключаем ETag чтобы Apple не получал 304
 app.use(express.json());
 app.use(express.static('public'));
 
