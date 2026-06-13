@@ -249,7 +249,7 @@ app.post('/api/register', async (req, res) => {
 
   const { data, error } = await supabase
     .from('customers')
-    .insert([{ id, cups: WELCOME_CUPS, gifts: 0 }])
+    .insert([{ id, cups: 0, gifts: 0 }])
     .select()
     .single();
 
