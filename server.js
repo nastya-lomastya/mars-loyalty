@@ -653,7 +653,9 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
 
     const buf = pass.getAsBuffer();
     res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-    res.setHeader('Last-Modified', new Date(customer.updated_at || Date.now()).toUTCString());
+    // Добавляем случайный сдвиг чтобы Last-Modified всегда был уникальным
+    const lastMod = new Date((customer.updated_at ? new Date(customer.updated_at).getTime() : Date.now()) + Math.floor(Math.random() * 1000));
+    res.setHeader('Last-Modified', lastMod.toUTCString());
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.end(buf);
