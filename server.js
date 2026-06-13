@@ -337,9 +337,9 @@ app.post('/api/add-cup', async (req, res) => {
     cups_after:  newCups
   }]);
 
-  // Отправляем push Apple Wallet с задержкой 1.5 сек
-  // чтобы updated_at успел записаться в БД перед тем как Apple запросит pass
+  // Два push: первый будит iOS, второй заставляет опросить сервер
   setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 1500);
+  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 4000);
 
   res.json({
     id:          updated.id,
