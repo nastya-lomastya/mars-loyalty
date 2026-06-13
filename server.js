@@ -109,8 +109,8 @@ app.get('/api/pass/:id', async (req, res) => {
       }],
       storeCard: {
         auxiliaryFields: [
-          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}`, changeMessage: 'Yeni fincan eklendi! ☕' },
-          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts), changeMessage: 'Hediye kazandın! 🎁' },
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
           { key: 'card_id', label: 'KART ID', value: customer.id },
         ],
         backFields: [
@@ -515,9 +515,15 @@ app.get('/v1/devices/:deviceId/registrations/:passTypeId', async (req, res) => {
 
   const lastModified = Math.max(...updated.map(u => new Date(u.updated_at).getTime() / 1000));
 
+  // Если initial sync (без passesUpdatedSince) — возвращаем lastUpdated в прошлом
+  // чтобы следующий запрос с passesUpdatedSince гарантированно нашёл обновления
+  const returnedLastUpdated = passesUpdatedSince
+    ? Math.floor(lastModified)
+    : Math.floor(Date.now() / 1000) - 120; // 2 минуты назад
+
   res.json({
     serialNumbers: updated.map(u => u.id),
-    lastUpdated:   String(Math.floor(lastModified)),
+    lastUpdated:   String(returnedLastUpdated),
   });
 });
 
@@ -616,8 +622,8 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
       barcodes: [{ message: customer.id, format: 'PKBarcodeFormatQR', messageEncoding: 'iso-8859-1' }],
       storeCard: {
         auxiliaryFields: [
-          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}`, changeMessage: 'Yeni fincan eklendi! ☕' },
-          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts), changeMessage: 'Hediye kazandın! 🎁' },
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
           { key: 'card_id', label: 'KART ID', value: customer.id },
         ],
         backFields: [
