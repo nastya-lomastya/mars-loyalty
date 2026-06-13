@@ -343,12 +343,14 @@ app.post('/api/add-cup', async (req, res) => {
   // Один push с задержкой 1.5 сек
   const regsBefore = await supabase.from('pass_registrations').select('*').eq('serial_number', customerId);
   console.log(`[add-cup] customer=${customerId} cups=${newCups} registrations_count=${regsBefore.data?.length || 0}`);
-  setTimeout(() => {
+  // Push ДО res.json — иначе Vercel убивает функцию раньше чем setTimeout срабатывает
+  try {
     console.log(`[push] attempting push for ${customerId}`);
-    sendPassUpdatePush(customerId)
-      .then(() => console.log(`[push] success for ${customerId}`))
-      .catch(e => console.error(`[push] error for ${customerId}:`, e));
-  }, 1500);
+    await sendPassUpdatePush(customerId);
+    console.log(`[push] success for ${customerId}`);
+  } catch (e) {
+    console.error(`[push] error for ${customerId}:`, e);
+  }
 
   res.json({
     id:          updated.id,
