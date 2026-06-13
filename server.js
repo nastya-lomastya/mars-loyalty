@@ -19,6 +19,46 @@ const TOTAL_CUPS = 8;
 const WELCOME_CUPS = 1;
 const MAX_CUPS_PER_DAY = 2;
 
+// ─── APNs PUSH для Apple Wallet ───────────────────────────────────────────────
+function getApnProvider() {
+  if (!process.env.PASS_CERT_BASE64 || !process.env.PASS_KEY_BASE64) return null;
+  try {
+    const apn = require('apn');
+    return new apn.Provider({
+      cert:        Buffer.from(process.env.PASS_CERT_BASE64, 'base64').toString('utf8'),
+      key:         Buffer.from(process.env.PASS_KEY_BASE64,  'base64').toString('utf8'),
+      production:  true,
+    });
+  } catch(e) {
+    console.error('APNs provider error:', e.message);
+    return null;
+  }
+}
+
+async function sendPassUpdatePush(customerId) {
+  try {
+    const { data: regs } = await supabase
+      .from('pass_registrations')
+      .select('push_token')
+      .eq('serial_number', customerId);
+
+    if (!regs || regs.length === 0) return;
+
+    const provider = getApnProvider();
+    if (!provider) return;
+
+    for (const reg of regs) {
+      const note = new (require('apn').Notification)();
+      note.topic = process.env.PASS_TYPE_IDENTIFIER;
+      await provider.send(note, reg.push_token);
+    }
+    provider.shutdown();
+    console.log(`APNs push sent for ${customerId} to ${regs.length} device(s)`);
+  } catch(e) {
+    console.error('APNs push error:', e.message);
+  }
+}
+
 // ─── APPLE WALLET PASS ────────────────────────────────────────────────────────
 // GET /api/pass/:id — generate and return .pkpass file
 app.get('/api/pass/:id', async (req, res) => {
@@ -59,6 +99,8 @@ app.get('/api/pass/:id', async (req, res) => {
       backgroundColor:    'rgb(26, 26, 26)',
       foregroundColor:    'rgb(200, 169, 110)',
       labelColor:         'rgb(200, 169, 110)',
+      webServiceURL:       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/` : 'https://card.marsespresso.com/',
+      authenticationToken: process.env.PASS_AUTH_TOKEN,
       barcodes: [{
         message:         customer.id,
         format:          'PKBarcodeFormatQR',
@@ -293,6 +335,9 @@ app.post('/api/add-cup', async (req, res) => {
     cups_after:  newCups
   }]);
 
+  // Отправляем push Apple Wallet для обновления карточки
+  sendPassUpdatePush(customerId).catch(console.error);
+
   res.json({
     id:          updated.id,
     cups:        updated.cups,
@@ -382,6 +427,120 @@ app.get('/api/google-pass/:id', async (req, res) => {
     console.error('Google Wallet error:', err);
     res.status(500).json({ error: 'Google pass oluşturulamadı: ' + err.message });
   }
+});
+
+// ─── APPLE WALLET WEBSERVICE ─────────────────────────────────────────────────
+// Apple вызывает эти эндпоинты автоматически
+
+// Регистрация устройства
+app.post('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', async (req, res) => {
+  const { deviceId, serialNumber } = req.params;
+  const { pushToken } = req.body;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('ApplePass ', '');
+
+  if (token !== process.env.PASS_AUTH_TOKEN) {
+    return res.status(401).send();
+  }
+
+  const { error } = await supabase
+    .from('pass_registrations')
+    .upsert({
+      device_id:    deviceId,
+      push_token:   pushToken,
+      pass_type_id: process.env.PASS_TYPE_IDENTIFIER,
+      serial_number: serialNumber,
+    }, { onConflict: 'device_id,serial_number' });
+
+  if (error) {
+    console.error('Registration error:', error);
+    return res.status(500).send();
+  }
+
+  res.status(201).send();
+});
+
+// Удаление регистрации устройства
+app.delete('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', async (req, res) => {
+  const { deviceId, serialNumber } = req.params;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('ApplePass ', '');
+
+  if (token !== process.env.PASS_AUTH_TOKEN) {
+    return res.status(401).send();
+  }
+
+  await supabase
+    .from('pass_registrations')
+    .delete()
+    .eq('device_id', deviceId)
+    .eq('serial_number', serialNumber);
+
+  res.status(200).send();
+});
+
+// Список обновлённых passes для устройства
+app.get('/v1/devices/:deviceId/registrations/:passTypeId', async (req, res) => {
+  const { deviceId } = req.params;
+  const { passesUpdatedSince } = req.query;
+
+  const { data: regs } = await supabase
+    .from('pass_registrations')
+    .select('serial_number')
+    .eq('device_id', deviceId);
+
+  if (!regs || regs.length === 0) {
+    return res.status(204).send();
+  }
+
+  // Проверяем какие customers обновились
+  let query = supabase
+    .from('customers')
+    .select('id, updated_at')
+    .in('id', regs.map(r => r.serial_number));
+
+  if (passesUpdatedSince) {
+    query = query.gt('updated_at', new Date(parseInt(passesUpdatedSince) * 1000).toISOString());
+  }
+
+  const { data: updated } = await query;
+
+  if (!updated || updated.length === 0) {
+    return res.status(304).send();
+  }
+
+  const lastModified = Math.max(...updated.map(u => new Date(u.updated_at).getTime() / 1000));
+
+  res.json({
+    serialNumbers: updated.map(u => u.id),
+    lastUpdated:   String(Math.floor(lastModified)),
+  });
+});
+
+// Отдать актуальный pass Apple
+app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
+  const { serialNumber } = req.params;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('ApplePass ', '');
+
+  if (token !== process.env.PASS_AUTH_TOKEN) {
+    return res.status(401).send();
+  }
+
+  // Переиспользуем логику генерации pass — редиректим на наш эндпоинт
+  req.params.id = serialNumber;
+  return res.redirect(`/api/pass/${serialNumber}`);
+});
+
+// Логи от Apple
+app.post('/v1/log', async (req, res) => {
+  const { logs } = req.body;
+  if (logs && logs.length > 0) {
+    await supabase.from('pass_logs').insert(
+      logs.map(msg => ({ message: typeof msg === 'string' ? msg : JSON.stringify(msg) }))
+    );
+  }
+  res.status(200).send();
 });
 
 // ─── DEBUG (удалить после теста) ─────────────────────────────────────────────
