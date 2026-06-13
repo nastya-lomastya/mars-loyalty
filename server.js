@@ -462,6 +462,11 @@ app.post('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', async 
   }
 
   res.status(201).send();
+
+  // Отправляем "разогревающий" push сразу после регистрации
+  // чтобы iOS не троттлил следующие push уведомления
+  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 1000);
+  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 4000);
 });
 
 // Удаление регистрации устройства
