@@ -337,11 +337,9 @@ app.post('/api/add-cup', async (req, res) => {
     cups_after:  newCups
   }]);
 
-  // Отправляем push Apple Wallet для обновления карточки
-  // Apple буферизует первый push — отправляем серию с задержками
-  sendPassUpdatePush(customerId).catch(console.error);
-  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 2000);
-  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 8000);
+  // Отправляем push Apple Wallet с задержкой 1.5 сек
+  // чтобы updated_at успел записаться в БД перед тем как Apple запросит pass
+  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 1500);
 
   res.json({
     id:          updated.id,
@@ -464,10 +462,8 @@ app.post('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', async 
 
   res.status(201).send();
 
-  // Отправляем "разогревающий" push сразу после регистрации
-  // чтобы iOS не троттлил следующие push уведомления
-  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 1000);
-  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 4000);
+  // Разогревающий push при регистрации
+  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 2000);
 });
 
 // Удаление регистрации устройства
