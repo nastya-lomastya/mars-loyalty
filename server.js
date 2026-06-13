@@ -646,7 +646,8 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
 
     const buf = pass.getAsBuffer();
     res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-    res.setHeader('Last-Modified', new Date(customer.updated_at).toUTCString());
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.end(buf);
 
   } catch (err) {
