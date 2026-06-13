@@ -207,11 +207,27 @@
         Bu ID senin kartın. Kaydet veya ekran görüntüsü al.<br>
         Baristayla paylaşarak fincan ekletebilirsin.
       </div>
-      <a href="#" id="view-card-link" class="btn-view">Kartımı Gör →</a>
+      <a href="#" id="view-card-link" class="btn-view" onclick="goToCard(event)">Kartımı Gör →</a>
     </div>
   </div>
 
   <script>
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    function goToCard(e) {
+      e.preventDefault();
+      const id = document.getElementById('success-id').textContent;
+      if (isIOS()) {
+        // iOS — сразу скачиваем pkpass, Wallet откроется автоматически
+        window.location.href = '/api/pass/' + id;
+      } else {
+        // Android и остальные — страница карточки с кнопкой Google Wallet
+        window.location.href = '/card/' + id;
+      }
+    }
+
     async function register() {
       const btn = document.getElementById('btn-register');
       btn.disabled = true;
