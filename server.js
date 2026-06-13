@@ -99,7 +99,7 @@ app.get('/api/pass/:id', async (req, res) => {
       backgroundColor:    'rgb(26, 26, 26)',
       foregroundColor:    'rgb(200, 169, 110)',
       labelColor:         'rgb(200, 169, 110)',
-      webServiceURL:       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/` : 'https://card.marsespresso.com/',
+      webServiceURL:       'https://card.marsespresso.com/',
       authenticationToken: process.env.PASS_AUTH_TOKEN,
       barcodes: [{
         message:         customer.id,
