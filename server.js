@@ -336,7 +336,9 @@ app.post('/api/add-cup', async (req, res) => {
   }]);
 
   // Отправляем push Apple Wallet для обновления карточки
+  // Двойной push — первый сразу, второй через 5 сек (Apple иногда игнорирует первый)
   sendPassUpdatePush(customerId).catch(console.error);
+  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 5000);
 
   res.json({
     id:          updated.id,
