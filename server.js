@@ -462,8 +462,7 @@ app.post('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', async 
 
   res.status(201).send();
 
-  // Разогревающий push при регистрации
-  setTimeout(() => sendPassUpdatePush(serialNumber).catch(console.error), 2000);
+  // Разогревающий push убран — мешал обновлению первой чашки
 });
 
 // Удаление регистрации устройства
