@@ -530,9 +530,132 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
     return res.status(401).send();
   }
 
-  // Переиспользуем логику генерации pass — редиректим на наш эндпоинт
+  // Генерируем pass напрямую (redirect не работает с Apple)
   req.params.id = serialNumber;
-  return res.redirect(`/api/pass/${serialNumber}`);
+
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', serialNumber)
+    .single();
+
+  if (error || !customer) return res.status(404).send();
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pass-'));
+  // добавляем .pass суффикс
+  const tmpPassDir = tmpDir + '.pass';
+  fs.mkdirSync(tmpPassDir, { recursive: true });
+
+  try {
+    const { PKPass } = require('passkit-generator');
+    const sharp = require('sharp');
+
+    const cups       = customer.cups;
+    const totalSlots = TOTAL_CUPS - 1;
+    const filled     = Math.min(cups, totalSlots);
+
+    const GOLD = '#C8A96E';
+    const GREY = '#3a3a3a';
+    const W = 640, H = 260;
+    const ROW1 = 4, ROW2 = 3;
+    const colW1 = W / ROW1;
+    const colW2 = W / (ROW2 + 1);
+
+    function cupSVG(cx, cy, color) {
+      return `
+        <path d="M${cx-22},${cy-10} Q${cx-22},${cy+18} ${cx},${cy+22} Q${cx+22},${cy+18} ${cx+22},${cy-10} Z" fill="${color}"/>
+        <rect x="${cx-22}" y="${cy-18}" width="44" height="14" rx="4" fill="${color}"/>
+        <rect x="${cx-14}" y="${cy-16}" width="28" height="10" rx="2" fill="rgb(26,26,26)" opacity="0.4"/>
+        <path d="M${cx+22},${cy-12} Q${cx+34},${cy-12} ${cx+34},${cy} Q${cx+34},${cy+12} ${cx+22},${cy+12}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/>
+      `;
+    }
+    function giftSVG(cx, cy, color) {
+      return `
+        <rect x="${cx-20}" y="${cy-8}" width="40" height="28" rx="4" fill="${color}"/>
+        <rect x="${cx-20}" y="${cy-18}" width="40" height="12" rx="3" fill="${color}"/>
+        <line x1="${cx}" y1="${cy-18}" x2="${cx}" y2="${cy+20}" stroke="rgb(26,26,26)" stroke-width="3"/>
+        <line x1="${cx-20}" y1="${cy-12}" x2="${cx+20}" y2="${cy-12}" stroke="rgb(26,26,26)" stroke-width="3"/>
+        <path d="M${cx},${cy-18} Q${cx-12},${cy-30} ${cx-16},${cy-22} Q${cx-20},${cy-14} ${cx},${cy-18}" fill="${color}"/>
+        <path d="M${cx},${cy-18} Q${cx+12},${cy-30} ${cx+16},${cy-22} Q${cx+20},${cy-14} ${cx},${cy-18}" fill="${color}"/>
+      `;
+    }
+
+    let icons = '';
+    for (let i = 0; i < ROW1; i++) {
+      const cx = colW1 * i + colW1 / 2;
+      icons += cupSVG(cx, 72, i < filled ? GOLD : GREY);
+    }
+    for (let i = 0; i < ROW2; i++) {
+      const cx = colW2 * i + colW2 / 2;
+      icons += cupSVG(cx, 190, (i + ROW1) < filled ? GOLD : GREY);
+    }
+    icons += giftSVG(colW2 * ROW2 + colW2 / 2, 190, filled >= totalSlots ? GOLD : GREY);
+
+    const svgStrip = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
+      <rect width="${W}" height="${H}" fill="rgb(26,26,26)"/>
+      ${icons}
+    </svg>`;
+
+    const stripBuf = await sharp(Buffer.from(svgStrip)).png().toBuffer();
+    fs.writeFileSync(path.join(tmpPassDir, 'strip.png'),    stripBuf);
+    fs.writeFileSync(path.join(tmpPassDir, 'strip@2x.png'), stripBuf);
+
+    const passJson = {
+      formatVersion:      1,
+      passTypeIdentifier: process.env.PASS_TYPE_IDENTIFIER,
+      serialNumber:       customer.id,
+      teamIdentifier:     process.env.APPLE_TEAM_ID,
+      organizationName:   'Mars Espresso',
+      description:        'Mars Loyalty Card',
+      backgroundColor:    'rgb(26, 26, 26)',
+      foregroundColor:    'rgb(200, 169, 110)',
+      labelColor:         'rgb(200, 169, 110)',
+      webServiceURL:      'https://card.marsespresso.com/',
+      authenticationToken: process.env.PASS_AUTH_TOKEN,
+      barcodes: [{ message: customer.id, format: 'PKBarcodeFormatQR', messageEncoding: 'iso-8859-1' }],
+      storeCard: {
+        auxiliaryFields: [
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
+          { key: 'card_id', label: 'KART ID', value: customer.id },
+        ],
+        backFields: [
+          { key: 'how',   label: 'Nasıl çalışır?', value: '7 fincan satın al, 8. fincanı bedava al. Baristayla QR kodunu paylaş.' },
+          { key: 'terms', label: 'Koşullar',        value: 'Kart kişiye özeldir. Günde en fazla 2 fincan eklenebilir.' },
+        ],
+      },
+    };
+
+    fs.writeFileSync(path.join(tmpPassDir, 'pass.json'), JSON.stringify(passJson));
+    const logoSrc = path.join(__dirname, 'public', 'mars_transparent.png');
+    const iconSrc = path.join(__dirname, 'public', 'mars_white.png');
+    fs.copyFileSync(logoSrc, path.join(tmpPassDir, 'logo.png'));
+    fs.copyFileSync(logoSrc, path.join(tmpPassDir, 'logo@2x.png'));
+    fs.copyFileSync(iconSrc, path.join(tmpPassDir, 'icon.png'));
+    fs.copyFileSync(iconSrc, path.join(tmpPassDir, 'icon@2x.png'));
+
+    const pass = await PKPass.from({
+      model: tmpPassDir,
+      certificates: {
+        wwdr:                Buffer.from(process.env.PASS_WWDR_BASE64, 'base64'),
+        signerCert:          Buffer.from(process.env.PASS_CERT_BASE64, 'base64'),
+        signerKey:           Buffer.from(process.env.PASS_KEY_BASE64,  'base64'),
+        signerKeyPassphrase: process.env.PASS_CERT_PASSWORD,
+      },
+    });
+
+    const buf = pass.getAsBuffer();
+    res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
+    res.setHeader('Last-Modified', new Date(customer.updated_at).toUTCString());
+    res.end(buf);
+
+  } catch (err) {
+    console.error('Pass update error:', err);
+    res.status(500).send();
+  } finally {
+    try { fs.rmSync(tmpPassDir, { recursive: true }); } catch (_) {}
+    try { fs.rmSync(tmpDir, { recursive: true }); } catch (_) {}
+  }
 });
 
 // Логи от Apple
