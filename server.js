@@ -303,11 +303,12 @@ app.post('/api/add-cup', async (req, res) => {
     .eq('action', 'cup_added')
     .gte('created_at', todayStart.toISOString());
 
-  if (todayLogs && todayLogs.length >= MAX_CUPS_PER_DAY) {
-    return res.status(429).json({
-      error: `Bu müşteri bugün zaten ${MAX_CUPS_PER_DAY} fincan aldı`
-    });
-  }
+  // if (todayLogs && todayLogs.length >= MAX_CUPS_PER_DAY) {
+  //   return res.status(429).json({
+  //     error: `Bu müşteri bugün zaten ${MAX_CUPS_PER_DAY} fincan aldı`
+  //   });
+  // }
+  // ⚠️ DAILY LIMIT TEMPORARILY DISABLED FOR TESTING
 
   const giftGiven = customer.cups >= TOTAL_CUPS;
   let newCups, newGifts;
