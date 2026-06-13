@@ -109,8 +109,8 @@ app.get('/api/pass/:id', async (req, res) => {
       }],
       storeCard: {
         auxiliaryFields: [
-          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
-          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}`, changeMessage: 'Yeni fincan eklendi! ☕' },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts), changeMessage: 'Hediye kazandın! 🎁' },
           { key: 'card_id', label: 'KART ID', value: customer.id },
         ],
         backFields: [
@@ -249,7 +249,7 @@ app.post('/api/register', async (req, res) => {
 
   const { data, error } = await supabase
     .from('customers')
-    .insert([{ id, cups: 0, gifts: 0 }])
+    .insert([{ id, cups: WELCOME_CUPS, gifts: 0 }])
     .select()
     .single();
 
@@ -314,7 +314,7 @@ app.post('/api/add-cup', async (req, res) => {
   let newCups, newGifts;
 
   if (giftGiven) {
-    newCups = 1;
+    newCups = 0;
     newGifts = customer.gifts + 1;
   } else {
     newCups = customer.cups + 1;
@@ -337,9 +337,8 @@ app.post('/api/add-cup', async (req, res) => {
     cups_after:  newCups
   }]);
 
-  // Два push: первый будит iOS, второй заставляет опросить сервер
+  // Один push с задержкой 1.5 сек
   setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 1500);
-  setTimeout(() => sendPassUpdatePush(customerId).catch(console.error), 4000);
 
   res.json({
     id:          updated.id,
@@ -617,8 +616,8 @@ app.get('/v1/passes/:passTypeId/:serialNumber', async (req, res) => {
       barcodes: [{ message: customer.id, format: 'PKBarcodeFormatQR', messageEncoding: 'iso-8859-1' }],
       storeCard: {
         auxiliaryFields: [
-          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}` },
-          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts) },
+          { key: 'stamps',  label: 'FİNCAN',  value: `${filled} / ${totalSlots}`, changeMessage: 'Yeni fincan eklendi! ☕' },
+          { key: 'gifts',   label: 'HEDİYE',  value: String(customer.gifts), changeMessage: 'Hediye kazandın! 🎁' },
           { key: 'card_id', label: 'KART ID', value: customer.id },
         ],
         backFields: [
