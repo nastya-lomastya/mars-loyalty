@@ -134,6 +134,66 @@
     /* Success */
     .success { display: none; text-align: center; animation: fadeIn 0.4s ease; width: 100%; }
     .success.visible { display: block; }
+
+    /* Wallet added screen */
+    .wallet-added {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+      width: 100%;
+      animation: fadeIn 0.5s ease;
+    }
+    .wallet-added.visible { display: flex; }
+    .wallet-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 1px solid rgba(200,169,110,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+    .wallet-title {
+      font-family: "Cinzel", serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--gold);
+    }
+    .wallet-note {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.6;
+      max-width: 260px;
+    }
+    .wallet-hint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(200,169,110,0.08);
+      border: 1px solid rgba(200,169,110,0.15);
+      border-radius: 12px;
+      padding: 12px 16px;
+      width: 100%;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      text-align: left;
+    }
+    .wallet-hint i { color: var(--gold); font-size: 20px; flex-shrink: 0; }
+    .btn-card {
+      font-family: "Cinzel", serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      margin-top: 8px;
+      padding: 8px;
+    }
+    .btn-card:hover { color: var(--gold); }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     .success-icon { font-size: 36px; color: var(--gold); margin-bottom: 0.75rem; }
@@ -209,6 +269,20 @@
       </div>
       <a href="#" id="view-card-link" class="btn-view" onclick="goToCard(event)">Kartımı Gör →</a>
     </div>
+
+    <div class="wallet-added" id="wallet-added">
+      <div class="wallet-icon">🍎</div>
+      <div class="wallet-title">Kart Wallet'a Eklendi</div>
+      <div class="wallet-note">
+        Kartın Apple Wallet'ında hazır.<br>
+        Barista QR kodunu okuttuğunda fincanlar otomatik eklenir.
+      </div>
+      <div class="wallet-hint">
+        <i class="ti ti-wallet"></i>
+        <span>Wallet uygulamasını aç → Mars Cafe kartını bul → Baristaya göster</span>
+      </div>
+      <a href="#" id="web-card-link" class="btn-card">Kart web sayfasını görüntüle →</a>
+    </div>
   </div>
 
   <script>
@@ -220,8 +294,14 @@
       e.preventDefault();
       const id = document.getElementById('success-id').textContent;
       if (isIOS()) {
-        // iOS — сразу скачиваем pkpass, Wallet откроется автоматически
+        // iOS — скачиваем pkpass, Wallet откроется автоматически
         window.location.href = '/api/pass/' + id;
+        // Когда пользователь вернётся на страницу — показываем экран подтверждения
+        document.getElementById('web-card-link').href = '/card/' + id;
+        setTimeout(() => {
+          document.getElementById('success').classList.remove('visible');
+          document.getElementById('wallet-added').classList.add('visible');
+        }, 2000);
       } else {
         // Android и остальные — страница карточки с кнопкой Google Wallet
         window.location.href = '/card/' + id;
