@@ -84,18 +84,12 @@
       color: var(--gold);
     }
     .pcell.gift {
-      background: #C8A96E;
-      color: #1a1a1a;
+      color: rgba(255,255,255,0.18);
       font-size: 20px;
-      border: none;
-      animation: giftpulse 2s ease-in-out infinite;
-    }
-    @keyframes giftpulse {
-      0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200,169,110,0.4); }
-      50% { transform: scale(1.07); box-shadow: 0 0 0 8px rgba(200,169,110,0); }
     }
 
     .preview-desc {
+      text-transform: uppercase;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 14px;
       color: rgba(255,255,255,0.5);
@@ -113,6 +107,7 @@
       color: var(--dark);
       border: none;
       border-radius: 12px;
+      text-transform: uppercase;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 15px;
       font-weight: 500;
@@ -125,6 +120,7 @@
     .btn-register:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     .cta-note {
+      text-transform: uppercase;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 11px;
       color: rgba(255,255,255,0.25);
@@ -161,18 +157,21 @@
       margin-bottom: 8px;
     }
     .wallet-title {
+      text-transform: uppercase;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 20px;
       letter-spacing: 2px;
       color: var(--gold);
     }
     .wallet-note {
+      text-transform: uppercase;
       font-size: 15px;
       color: rgba(255,255,255,0.5);
       line-height: 1.6;
       max-width: 260px;
     }
     .wallet-hint {
+      text-transform: uppercase;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -187,6 +186,7 @@
     }
     .wallet-hint i { color: var(--gold); font-size: 20px; flex-shrink: 0; }
     .btn-card {
+      text-transform: uppercase;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 11px;
       letter-spacing: 2px;
@@ -199,7 +199,7 @@
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     .success-icon { font-size: 36px; color: var(--gold); margin-bottom: 0.75rem; }
-    .success-title { font-family: Georgia, 'Times New Roman', serif; font-size: 9px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 0.75rem; }
+    .success-title { text-transform: uppercase; font-family: Georgia, 'Times New Roman', serif; font-size: 9px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 0.75rem; }
     .success-id {
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 36px;
@@ -208,13 +208,15 @@
       margin: 0.5rem 0 0.75rem;
       font-weight: 400;
     }
-    .success-note { font-family: Georgia, 'Times New Roman', serif; font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.9; margin-bottom: 1.5rem; letter-spacing: 0.3px; }
+    .success-note { text-transform: uppercase; font-family: Georgia, 'Times New Roman', serif; font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.9; margin-bottom: 1.5rem; letter-spacing: 0.3px; }
     .btn-view {
+      text-transform: uppercase;
       display: inline-block;
       width: 100%;
-      padding: 14px;
-      border: 1px solid var(--gold);
-      color: var(--gold);
+      padding: 15px;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
       border-radius: 12px;
       font-family: Georgia, 'Times New Roman', serif;
       font-size: 12px;
@@ -223,7 +225,7 @@
       text-align: center;
       transition: all 0.2s;
     }
-    .btn-view:hover { background: var(--gold); color: var(--dark); }
+    .btn-view:hover { background: var(--gold-light); transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -247,50 +249,30 @@
           <div class="pcell gift"><i class="ti ti-gift"></i></div>
         </div>
         <div class="preview-desc">
-          7 fincan satın al, <strong>8. fincanı bedava</strong> al.<br>
-          İstediğin kahve — hiçbir kural yok.
+          7 fincan topla ve <strong>istediğin içeceği</strong> ücretsiz al!
         </div>
       </div>
 
       <button class="btn-register" id="btn-register" onclick="register()">
         Kartımı Oluştur
       </button>
-      <div class="cta-note">
-        İsim, e-posta veya telefon gerekmez.<br>
-        Kartın anonim ve güvenlidir.
-      </div>
+
     </div>
 
     <div class="success" id="success">
-      <div class="success-icon"><i class="ti ti-sparkles"></i></div>
       <div class="success-title">Kartın Hazır</div>
       <div class="success-id" id="success-id">—</div>
-      <div class="success-note">
-        Bu ID senin kartın. Kaydet veya ekran görüntüsü al.<br>
-        Baristayla paylaşarak fincan ekletebilirsin.
-      </div>
       <a href="#" id="view-card-link" class="btn-view" onclick="goToCard(event)">Kartımı Gör →</a>
     </div>
 
     <div class="wallet-added" id="wallet-added">
-      <div class="wallet-icon">
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="44" height="44" rx="10" fill="#1C1C1E"/>
-          <path d="M22 8C20.1 8 18.5 9 17.5 10.5C16.5 9 14.9 8 13 8C10.2 8 8 10.2 8 13C8 18 13 22 22 34C31 22 36 18 36 13C36 10.2 33.8 8 31 8C29.1 8 27.5 9 26.5 10.5C25.5 9 23.9 8 22 8Z" fill="white" opacity="0.15"/>
-          <path d="M28 14h-3v-3a1 1 0 0 0-2 0v3h-3a1 1 0 0 0 0 2h3v3a1 1 0 0 0 2 0v-3h3a1 1 0 0 0 0-2z" fill="#C8A96E"/>
-          <rect x="10" y="20" width="24" height="14" rx="3" fill="white" opacity="0.9"/>
-          <rect x="10" y="20" width="24" height="5" rx="2" fill="#C8A96E"/>
-          <rect x="13" y="28" width="8" height="3" rx="1" fill="#1C1C1E" opacity="0.5"/>
-        </svg>
+      <div class="wallet-icon-wrap">
+        <img src="https://developer.apple.com/wallet/add-to-apple-wallet-guidelines/img/en_add_to_apple_wallet_rgb_us-uk_051221.svg" alt="Apple Wallet" style="width:200px;height:auto;display:block;margin:0 auto;">
       </div>
       <div class="wallet-title">Kart Wallet'a Eklendi</div>
       <div class="wallet-note">
-        Kartın Apple Wallet'ında hazır.<br>
-        Barista QR kodunu okuttuğunda fincanlar otomatik eklenir.
-      </div>
-      <div class="wallet-hint">
-        <i class="ti ti-wallet"></i>
-        <span>Wallet uygulamasını aç → Mars Cafe kartını bul → Baristaya göster</span>
+        Kartınızı Apple Wallet'a ekledik.<br>
+        Kartı açın ve baristaya gösterin.
       </div>
       <a href="#" id="web-card-link" class="btn-card">Kart web sayfasını görüntüle →</a>
     </div>
