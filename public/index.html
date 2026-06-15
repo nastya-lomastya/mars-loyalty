@@ -85,14 +85,16 @@
       justify-content: center;
       border-radius: 10px;
       font-size: 26px;
-      color: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.4);
     }
     .pcell.active {
       color: var(--gold);
     }
     .pcell.gift {
-      color: rgba(255,255,255,0.18);
+      color: rgba(200,169,110,0.4);
       font-size: 20px;
+      border: 1.5px dashed rgba(200,169,110,0.4);
+      border-radius: 10px;
     }
 
     .preview-desc {
@@ -202,7 +204,7 @@
       margin-top: 8px;
       padding: 8px;
     }
-    .btn-card:hover { color: var(--gold); }
+    .btn-card:hover { color: var(--gold-light); }
     @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     .success-icon { font-size: 36px; color: var(--gold); margin-bottom: 0.75rem; }
@@ -274,7 +276,7 @@
 
     <div class="wallet-added" id="wallet-added">
       <div class="wallet-icon-wrap">
-        <img src="https://developer.apple.com/wallet/add-to-apple-wallet-guidelines/img/en_add_to_apple_wallet_rgb_us-uk_051221.svg" alt="Apple Wallet" style="width:200px;height:auto;display:block;margin:0 auto;">
+        <img src="/add-to-apple-wallet.svg" alt="Apple Wallet" style="width:72px;height:72px;display:block;margin:0 auto;border-radius:16px;">
       </div>
       <div class="wallet-title">Kart Wallet'a Eklendi</div>
       <div class="wallet-note">
