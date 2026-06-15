@@ -307,9 +307,13 @@
         <div class="c-id-label">ID</div>
         <div class="c-id-value" id="c-id">—</div>
       </div>
-      <div>
+      <div style="text-align:right">
         <div class="c-cups-label">Fincan</div>
         <div class="c-cups-value" id="c-cups">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="c-cups-label">Hediye</div>
+        <div class="c-cups-value" id="c-gifts">—</div>
       </div>
     </div>
     <div class="stars-mini" id="c-stars"></div>
@@ -463,8 +467,8 @@
 
     function renderCustomer(data) {
       document.getElementById('c-id').textContent = data.id;
-      const shown = Math.min(data.cups, 7);
-      document.getElementById('c-cups').textContent = Math.min(data.cups, 7) + ' / 7';
+      document.getElementById('c-cups').textContent = Math.min(data.cups, TOTAL - 1) + ' / ' + (TOTAL - 1);
+      document.getElementById('c-gifts').textContent = data.gifts ?? 0;
 
       const stars = document.getElementById('c-stars');
       stars.innerHTML = '';
@@ -481,12 +485,13 @@
       }
 
       const btn = document.getElementById('add-btn');
+      // Показываем Hediye Ver когда клиент набрал все чашки (cups >= TOTAL)
       if (data.cups >= TOTAL) {
         btn.className = 'add-btn gift';
-        btn.textContent = '🎁 Hediye Kahveyi Ver';
+        btn.innerHTML = '🎁 Hediye Kahveyi Ver';
       } else {
         btn.className = 'add-btn';
-        btn.textContent = '☕ Fincan Ekle';
+        btn.innerHTML = '☕ Fincan Ekle';
       }
 
       document.getElementById('customer-card').classList.add('visible');
@@ -512,12 +517,12 @@
         if (!res.ok) {
           showToast(data.error || 'Hata oluştu', 'error');
         } else {
-          currentCustomer = { ...currentCustomer, cups: data.cups };
+          currentCustomer = { ...currentCustomer, cups: data.cups, gifts: data.gifts };
           renderCustomer(currentCustomer);
           if (data.giftGiven) {
             showToast('🎉 Hediye verildi! Sayaç sıfırlandı', 'success');
           } else if (data.giftEarned) {
-            showToast('🎉 Hediye kazanıldı!', 'success');
+            showToast('🎁 Hediye hakkı kazanıldı!', 'success');
           } else {
             showToast('Fincan eklendi ✓', 'success');
           }
@@ -536,7 +541,7 @@
         const data = await res.json();
         currentCustomer = data;
         renderCustomer(data);
-        showToast(`Yeni müşteri: ${data.id} (+3 yıldız)`, 'success');
+        showToast(`Yeni müşteri: ${data.id}`, 'success');
       } catch {
         showToast('Kayıt hatası', 'error');
       }

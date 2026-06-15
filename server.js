@@ -17,7 +17,7 @@ const supabase = createClient(
 );
 
 const TOTAL_CUPS = 8;
-const WELCOME_CUPS = 1;
+const WELCOME_CUPS = 0;
 const MAX_CUPS_PER_DAY = 2;
 
 // ─── APNs PUSH для Apple Wallet ───────────────────────────────────────────────
