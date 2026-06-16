@@ -269,7 +269,15 @@ app.get('/api/customer/:id', async (req, res) => {
     .single();
 
   if (error || !data) return res.status(404).json({ error: 'Müşteri bulunamadı' });
-  res.json(data);
+
+  // Проверяем добавлена ли карта в Wallet (есть ли регистрация устройства)
+  const { data: regs } = await supabase
+    .from('pass_registrations')
+    .select('device_id')
+    .eq('serial_number', req.params.id)
+    .limit(1);
+
+  res.json({ ...data, walletAdded: regs && regs.length > 0 });
 });
 
 // ─── ADD cup (barista action) ─────────────────────────────────────────────────

@@ -307,11 +307,35 @@
       if (isIOS()) {
         // iOS — скачиваем pkpass, Wallet откроется автоматически
         document.getElementById('web-card-link').href = '/card/' + id;
+
+        // Когда пользователь вернётся на страницу — проверяем добавил ли он карту
+        function onReturn() {
+          if (document.visibilityState === 'visible') {
+            document.removeEventListener('visibilitychange', onReturn);
+            // Небольшая задержка — даём Apple время зарегистрировать устройство
+            setTimeout(() => {
+              fetch('/api/customer/' + id)
+                .then(r => r.json())
+                .then(data => {
+                  if (data.walletAdded) {
+                    // Карта добавлена — показываем экран подтверждения
+                    document.getElementById('success').classList.remove('visible');
+                    document.getElementById('wallet-added').classList.add('visible');
+                  } else {
+                    // Пользователь нажал Отменить — ведём на веб-версию карты
+                    window.location.href = '/card/' + id;
+                  }
+                })
+                .catch(() => {
+                  // На случай ошибки — ведём на веб-версию
+                  window.location.href = '/card/' + id;
+                });
+            }, 1500);
+          }
+        }
+
+        document.addEventListener('visibilitychange', onReturn);
         window.location.href = '/api/pass/' + id;
-        setTimeout(() => {
-          document.getElementById('success').classList.remove('visible');
-          document.getElementById('wallet-added').classList.add('visible');
-        }, 2000);
       } else {
         // Android и остальные — веб-версия карточки
         window.location.href = '/card/' + id;
