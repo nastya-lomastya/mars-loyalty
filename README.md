@@ -34,7 +34,7 @@ Built to replace paper stamp cards — guests collect cups in Apple Wallet or as
 <img src="screenshots/apple-card.gif" width="300" alt="Apple Wallet loyalty card demo" />
 
 #### Barista interface
-<img src="screenshots/barista-panel.gif" width="600" alt="Barista interface" />
+<img src="screenshots/barista-panel.gif" width="300" alt="Barista interface" />
 
 #### Demo GIF
 <!-- <img src="screenshots/demo.gif" width="300" alt="Adding a cup demo" /> -->
