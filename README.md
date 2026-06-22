@@ -46,9 +46,4 @@ Built to replace paper stamp cards — guests collect cups in Apple Wallet or as
 - SSL certificates and private keys are not stored in this repo (`certs/` is in `.gitignore`)  
 - Push notifications use Apple APNs — requires valid `.p8` key configured in environment variables
 
----
 
-## 💡 Built with
-
-Designed and developed by [@nastya-lomastya](https://github.com/nastya-lomastya)  
-AI-assisted development with Claude (Anthropic)
