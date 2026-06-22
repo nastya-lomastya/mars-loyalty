@@ -30,13 +30,13 @@ Built to replace paper stamp cards — guests collect cups in Apple Wallet or as
 
 ## 📸 Screenshots
 
-<!-- Apple Wallet card -->
+#### Apple Wallet card
 <img src="<img src="screenshots/apple-card.gif" width="300" alt="Apple Wallet loyalty card demo" />" width="300" alt="Apple Wallet card" />
 
-<!-- Barista interface -->
+#### Barista interface
 <img src="screenshots/barista.png" width="600" alt="Barista interface" />
 
-<!-- Demo GIF -->
+#### Demo GIF
 <!-- <img src="screenshots/demo.gif" width="300" alt="Adding a cup demo" /> -->
 
 ---
