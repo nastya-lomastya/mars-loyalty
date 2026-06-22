@@ -1,89 +1,54 @@
-# Mars Cafe — Loyalty System
+# 🫐 Mars Loyalty Card
 
-Anonymous UUID-based loyalty card system. No personal data collected (no names, emails, or phone numbers) — fully KVKK compliant.
+Digital loyalty card system for **Mars Coffee & Kitchen** café (Istanbul).  
+Built to replace paper stamp cards — guests collect cups in Apple Wallet or as a web app on Android.
 
-## How it works
+---
 
-1. Customer opens `marsespresso.com/loyalty` and gets a card with a QR code
-2. On registration, the card starts with **1 welcome cup**
-3. Barista scans the QR code and adds a cup after each purchase
-4. On the **8th cup** — any coffee is free 🎁
-5. Gift counter increments, cup counter resets to 0
+## ✨ Features
 
-## Pages
+- **Apple Wallet card** — real PassKit `.pkpass`, added to iPhone with one tap  
+- **Push notifications** — card updates instantly when barista adds a cup (no manual refresh)  
+- **Barista interface** — `barista.html`: scan or search guest, add cups, track free drink rewards  
+- **Android PWA** — `card.marsespresso.com` installable as home screen app via manifest.json  
+- **Supabase backend** — guests, cup counts, and push tokens stored in PostgreSQL  
+- **Serverless API** — all endpoints deployed on Vercel (Node.js)
 
-| URL | Description |
-|-----|-------------|
-| `/` | Customer registration page |
-| `/card/:id` | Customer loyalty card with QR code |
-| `/barista` | Barista panel — scan QR, add cups, register new customers |
+---
 
-## Setup
+## 🛠 Tech Stack
 
-### Step 1 — Supabase (database)
+| Layer | Tech |
+|---|---|
+| Frontend | HTML, CSS, Vanilla JS |
+| Backend | Node.js, Vercel Serverless Functions |
+| Database | Supabase (PostgreSQL) |
+| Wallet | Apple PassKit (pkpass + push) |
+| PWA | Web App Manifest (Android) |
 
-1. Go to [supabase.com](https://supabase.com) → create a new project
-2. Open **SQL Editor** and run this to create the tables:
+---
 
-```sql
--- Customers table
-create table customers (
-  id text primary key,
-  cups integer default 1,
-  gifts integer default 0,
-  created_at timestamp default now(),
-  updated_at timestamp default now()
-);
+## 📸 Screenshots
 
--- Action log (for fraud detection)
-create table logs (
-  id uuid primary key default gen_random_uuid(),
-  customer_id text references customers(id),
-  barista_id text,
-  action text,        -- 'cup_added' or 'gift_given'
-  cups_after integer,
-  created_at timestamp default now()
-);
-```
+<!-- Apple Wallet card -->
+<img src="<img src="screenshots/apple-card.gif" width="300" alt="Apple Wallet loyalty card demo" />" width="300" alt="Apple Wallet card" />
 
-3. Go to **Settings → API** and copy:
-   - Project URL → `SUPABASE_URL`
-   - `anon` public key → `SUPABASE_ANON_KEY`
+<!-- Barista interface -->
+<img src="screenshots/barista.png" width="600" alt="Barista interface" />
 
-### Step 2 — Local setup
+<!-- Demo GIF -->
+<!-- <img src="screenshots/demo.gif" width="300" alt="Adding a cup demo" /> -->
 
-```bash
-# Install dependencies
-npm install
+---
 
-# Create environment file
-cp .env.example .env
-# Open .env and paste your Supabase credentials
+## 🔐 Notes
 
-# Start the server
-npm run dev
-# Open http://localhost:3000
-```
+- SSL certificates and private keys are not stored in this repo (`certs/` is in `.gitignore`)  
+- Push notifications use Apple APNs — requires valid `.p8` key configured in environment variables
 
-### Step 3 — Deploy to Vercel
+---
 
-1. Push this repo to GitHub
-2. Go to [vercel.com](https://vercel.com) → New Project → select the repo
-3. Add environment variables (same as your `.env` file)
-4. Click Deploy — done! ✓
+## 💡 Built with
 
-## Fraud protection
-
-- Maximum **1 cup per UUID per day**
-- Every action is logged: `customer_id`, `barista_id`, timestamp
-- Barista PIN system — coming soon
-- Owner dashboard with anomaly detection — coming soon
-
-## Tech stack
-
-| Tool | Purpose | Cost |
-|------|---------|------|
-| Supabase | Database | Free tier |
-| Vercel | Hosting | Free tier |
-| Node.js + Express | Server | — |
-| Apple/Google Wallet | Card delivery | $99/year (Apple Developer) |
+Designed and developed by [@nastya-lomastya](https://github.com/nastya-lomastya)  
+AI-assisted development with Claude (Anthropic)
