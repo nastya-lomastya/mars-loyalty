@@ -3,7 +3,7 @@
   "buildCommand": "npm install",
   "routes": [
     {
-      "src": "/(.*\\.(svg|png|ico|css|js))",
+      "src": "/(.*\\.(svg|png|ico|css|js|json|webmanifest))",
       "dest": "public/$1"
     },
     {
