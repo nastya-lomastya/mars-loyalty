@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mars Cafe — Kartım</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#1d1813">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mars Cafe">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -246,9 +252,6 @@
           <button class="btn-apple-wallet" id="btn-apple-wallet" onclick="downloadApplePass()">
             <img src="https://developer.apple.com/wallet/add-to-apple-wallet-guidelines/img/en_add_to_apple_wallet_rgb_us-uk_051221.svg" alt="Add to Apple Wallet">
           </button>
-          <button class="btn-google-wallet" id="btn-google-wallet" onclick="addToGoogleWallet()">
-            <img src="https://developers.google.com/static/wallet/images/add-to-google-wallet/Add_to_Google_Wallet_badge.svg" alt="Add to Google Wallet">
-          </button>
         </div>
       </div>
 
@@ -265,14 +268,6 @@
     const isIOS = /iPhone|iPad|iPod/.test(ua);
     const isAndroid = /Android/.test(ua);
 
-    // Show correct wallet button
-    window.addEventListener('DOMContentLoaded', () => {
-      // На iOS карта уже добавлена через Wallet на предыдущем шаге — кнопку не показываем
-      if (isAndroid) {
-        document.getElementById('btn-google-wallet').style.display = 'block';
-      }
-      // Для десктопа и остальных — ничего не показываем
-    });
 
     function downloadApplePass() {
       window.location.href = '/api/pass/' + id;
