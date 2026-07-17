@@ -1,11 +1,12 @@
 {
   "version": 2,
   "buildCommand": "npm install",
+  "functions": {
+    "server.js": {
+      "includeFiles": "public/**"
+    }
+  },
   "routes": [
-    {
-      "src": "/(.*\\.(svg|png|ico|css|js|json|webmanifest))",
-      "dest": "public/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "server.js"
